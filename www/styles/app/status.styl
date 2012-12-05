@@ -1,0 +1,30 @@
+@import 'nib'
+
+@keyframes spin
+  0%
+    transform: rotate(0deg)
+  100%
+    transform: rotate(360deg);
+
+#status
+  font-size: 28px
+  position: fixed
+  top: 10px
+  right: 0
+  margin-right: 2px
+  padding: 12px
+
+  & .load-indicator
+    height: 24px
+    line-height: 24px
+
+    & span
+      display: inline-block
+      float: left
+      width: 24px
+      height: 24px
+      margin-top: 6px
+      margin-right: 6px
+      background: url('../images/app/load-indicator.png') no-repeat top left
+      transform
+      -webkit-animation: spin 0.8s infinite linear

@@ -1,0 +1,27 @@
+@import 'nib'
+
+overlay_color = black
+
+#action
+  absolute: top
+  opacity: 0.3
+  width: 100%
+  height: 100%
+
+  & > .target
+    opacity: 0
+    left: -2px // prevent single-pixel gap from appearing
+    right: -2px // prevent single-pixel gap from appearing
+
+  & .trapezoid
+    &.top
+      border-top-color: overlay_color
+
+    &.right
+      border-right-color: overlay_color
+
+    &.bottom
+      border-bottom-color: overlay_color
+
+    &.left
+      border-left-color: overlay_color

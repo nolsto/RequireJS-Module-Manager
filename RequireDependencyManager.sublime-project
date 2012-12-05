@@ -1,0 +1,13 @@
+{
+	"folders":
+	[
+		{
+			"path": "/Users/nstover/Projects/RequireDependencyManager"
+		}
+	],
+	"settings":
+	{
+		"base_directory": "www/scripts/app",
+		"foo": "baz"
+	}
+}

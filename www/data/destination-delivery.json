@@ -1,0 +1,23 @@
+{
+  "name": "Destination Delivery",
+  "surveyID": "CNKNSWW",
+  "sections": [
+    {
+      "slides": [
+        {
+          "menuItem": "Introduction",
+          "title": "Destination Delivery",
+          "body": "<p>Destination Delivery is a new feature for a greeting card app which allows you to leave a personalized digital card at a physical location that your recipient will receive on their smartphone when they enter a geo-fenced area. Currently the greeting card app allow you to send cards via Facebook, Twitter, Text Message, and Email, but Destination Delivery aims to combine the ease of sending a digital card with the feeling of receiving a physical card.</p><p>After selecting and personalizing your digital card with your message, signature and picture, you can choose the “geo drop” sending option and choose a recipient from your contact list. Then use the special map functionality to select a location where you want your card to be experienced with a simple finger drag, creating an area as small as the restaurant where you and your spouse had a first date, or as large as the city that your best friend is visiting for the first time.</p><p>When your recipient arrives at that location, they will receive a notification that a digital card waiting for them. The recipient can view the card by clicking on the notification and the phone will open the browser to display their card, they don’t need to have the app installed.</p>",
+          "forward": "Watch Demo"
+        },
+        {
+          "menuItem": "Demo Video",
+          "videoScreen": {
+            "frame": "none@550x400",
+            "video": {"basename": "DestinationDelivery"}
+          }
+        }
+      ]
+    }
+  ]
+}

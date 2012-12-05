@@ -1,0 +1,203 @@
+{
+  "name": "Smash Ups",
+  "surveyID": "CNY9HBT",
+  "sections": [
+    {
+      "slides": [
+        {
+          "menuItem": "Introduction",
+          "title": "Smash Ups",
+          "body": "<p>Smash Ups are customized eCards that put your recipient and their interests into the video or animation.</p><p>Once you’ve selected the Smash Up eCard you want to send, you will be prompted to provide some information about the recipient. First you will be asked to enter their name. Then you will be guided to choose other fun items that are meaningful to and describe the person to whom you are sending your eCard.  In a series of imageScreens with menus of options such as the kind of car they drive, their favorite food, hobbies they enjoy, etc, you can choose things that will be added to the eCard story to make it a one of a kind greeting. Once you’ve made your selections, you can preview the customized greeting and choose how you want to deliver your eCard via email, facebook, or to their mobile phone.</p><p>The recipient will receive a link that when clicked will open and play their one of a kind, personalized card.</p>",
+          "forward": "Dive In!"
+        },
+        {
+          "menuItem": "Instructions",
+          "imageScreen": {
+            "frame": "iphone_portrait",
+            "image": {"filename": "SmashUps_p1.jpg"},
+            "action": {
+              "trigger": "tap",
+              "prompt": "Tap the button to get started",
+              "target": {"t":0.8146, "r":0.1531, "b":0.0833, "l":0.1781},
+              "visible": false
+            }
+          }
+        },
+        {
+          "menuItem": "Categories",
+          "imageScreen": {
+            "frame": "iphone_portrait",
+            "image": {"filename": "SmashUps_p2.jpg"},
+            "action": {
+              "trigger": "tap",
+              "prompt": "Tap the \"Romantic\" category button",
+              "target": {"t":0.2583, "r":0, "b":0.6167, "l":0}
+            }
+          }
+        },
+        {
+          "menuItem": "Category Items",
+          "imageScreen": {
+            "frame": "iphone_portrait",
+            "image": {"filename": "SmashUps_p3.jpg"},
+            "action": {
+              "trigger": "tap",
+              "prompt": "Tap the \"Hamster Love\" item",
+              "target": {"t":0.3979, "r":0.1375, "b":0.2583, "l":0.1281},
+              "visible": false
+            }
+          }
+        },
+        {
+          "menuItem": "Choose Words",
+          "imageScreen": {
+            "frame": "iphone_portrait",
+            "image": {"filename": "SmashUps_p4.jpg"},
+            "action": {
+              "trigger": "tap",
+              "prompt": "Tap to add recipient's name",
+              "target": {"t":0.2375, "r":0.1172, "b":0.6417, "l":0.1281}
+            }
+          }
+        },
+        {
+          "menuItem": "Choose Name",
+          "imageScreen": {
+            "frame": "iphone_portrait",
+            "image": {"filename": "SmashUps_p4a.jpg"},
+            "action": {
+              "trigger": "tap",
+              "prompt": "Tap \"Kathy\"",
+              "target": {"t":0.6354, "r":0, "b":0.2708, "l":0},
+              "visible": false
+            }
+          }
+        },
+        {
+          "imageScreen": {
+            "frame": "iphone_portrait",
+            "image": {"filename": "SmashUps_p4a2.jpg"},
+            "action": {
+              "trigger": "tap",
+              "prompt": "Tap to add their favorite car",
+              "target": {"t":0.3625, "r":0.1172, "b":0.5167, "l":0.1281}
+            }
+          }
+        },
+        {
+          "menuItem": "Choose Car",
+          "imageScreen": {
+            "frame": "iphone_portrait",
+            "image": {"filename": "SmashUps_p4b.jpg"},
+            "action": {
+              "trigger": "tap",
+              "prompt": "Tap \"Mini Cooper\"",
+              "target": {"t":0.6354, "r":0, "b":0.2708, "l":0},
+              "visible": false
+            }
+          }
+        },
+        {
+          "imageScreen": {
+            "frame": "iphone_portrait",
+            "image": {"filename": "SmashUps_p4b2.jpg"},
+            "action": {
+              "trigger": "tap",
+              "prompt": "Tap to add their favorite food",
+              "target": {"t":0.4969, "r":0.1172, "b":0.3823, "l":0.1281}
+            }
+          }
+        },
+        {
+          "menuItem": "Choose Food",
+          "imageScreen": {
+            "frame": "iphone_portrait",
+            "image": {"filename": "SmashUps_p4c.jpg"},
+            "action": {
+              "trigger": "tap",
+              "prompt": "Tap \"Salted Caramels\"",
+              "target": {"t":0.6354, "r":0, "b":0.2708, "l":0},
+              "visible": false
+            }
+          }
+        },
+        {
+          "imageScreen": {
+            "frame": "iphone_portrait",
+            "image": {"filename": "SmashUps_p4c2.jpg"},
+            "action": {
+              "trigger": "tap",
+              "prompt": "Tap to add a random activity",
+              "target": {"t":0.6208, "r":0.1172, "b":0.2583, "l":0.1281}
+            }
+          }
+        },
+        {
+          "menuItem": "Choose Activity",
+          "imageScreen": {
+            "frame": "iphone_portrait",
+            "image": {"filename": "SmashUps_p4d.jpg"},
+            "action": {
+              "trigger": "tap",
+              "prompt": "Tap \"Basket Weaving\"",
+              "target": {"t":0.6354, "r":0, "b":0.2708, "l":0},
+              "visible": false
+            }
+          }
+        },
+        {
+          "imageScreen": {
+            "frame": "iphone_portrait",
+            "image": {"filename": "SmashUps_p5.jpg"},
+            "action": {
+              "trigger": "tap",
+              "prompt": "Tap button to complete"
+            }
+          }
+        },
+        {
+          "menuItem": "Preview Video",
+          "imageScreen": {
+            "frame": "iphone_landscape",
+            "image": {"filename": "SmashUps_p6.jpg"},
+            "action": {
+              "trigger": "tap",
+              "prompt": "Tap to play customized video"
+            }
+          }
+        },
+        {
+          "videoScreen": {
+            "frame": "iphone_landscape",
+            "video": {"basename": "SmashUps_p7"}
+          }
+        },
+        {
+          "imageScreen": {
+            "frame": "iphone_landscape",
+            "image": {"filename": "SmashUps_p8.jpg"},
+            "action": {
+              "trigger": "tap",
+              "prompt": "Tap to send",
+              "target": {"t":0.4828, "r":0.3813, "b":0.3656, "l":0.3677},
+              "visible": false
+            }
+          }
+        },
+        {
+          "menuItem": "Send Options",
+          "imageScreen": {
+            "frame": "iphone_portrait",
+            "image": {"filename": "SmashUps_p9.jpg"},
+            "action": {
+              "trigger": "tap",
+              "prompt": "Choose a send option",
+              "target": {"t":0.2313, "r":0.1171, "b":0.2563, "l":0.1171},
+              "visible": false
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
