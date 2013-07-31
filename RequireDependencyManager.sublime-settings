@@ -1,4 +1,8 @@
 {
-	"foo": "bar",
-	"base_directory": "."
+	"requirejs_config":
+	{
+		"appDir": ".",
+		"baseUrl": ".",
+		"paths": {}
+	}
 }

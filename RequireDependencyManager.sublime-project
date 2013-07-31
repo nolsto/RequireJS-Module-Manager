@@ -2,12 +2,27 @@
 	"folders":
 	[
 		{
-			"path": "/Users/nstover/Projects/RequireDependencyManager"
+			"path": "~/Projects/RequireDependencyManager",
+			"file_exclude_patterns":
+			[
+				"*.sublime-workspace"
+			]
 		}
 	],
 	"settings":
 	{
-		"base_directory": "www/scripts/app",
-		"foo": "baz"
+		"requirejs_config":
+		{
+			"appDir": "tests/cases/www",
+			"baseUrl": "js/lib",
+			"paths":
+			{
+				"app": "../app",
+				"util": "../util",
+				"common": "../util/common",
+				"print": "../util/common/print.js",
+				"templates": "../../templates"
+			}
+		}
 	}
 }
