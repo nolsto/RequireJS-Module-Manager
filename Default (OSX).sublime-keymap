@@ -2,6 +2,6 @@
     {
         "keys": ["ctrl+r"],
         "__doc__": "Add a Javascript Module Dependency",
-        "command": "add_require_dependency"
+        "command": "add_requirejs_module_dependency"
     }
 ]

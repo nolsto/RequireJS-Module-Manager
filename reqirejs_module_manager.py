@@ -27,13 +27,13 @@ from module_collection import ModuleCollection
 # var ModuleA = require('path/to/module_a')
 #   , ModuleB = require('path/to/module_b');
 
-class AddRequireDependencyCommand(sublime_plugin.WindowCommand):
+class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
 
     def run(self):
         self.folder = self.window.folders()[0]
         self.view = self.window.active_view()
         self.settings = sublime.load_settings(
-            'RequireDependencyManager.sublime-settings')
+            'RequireJS Module Manager.sublime-settings')
         self.requirejs_config = self.get_setting('requirejs_config')
         self.module_collection = ModuleCollection(self.folder,
                                                   self.requirejs_config)
@@ -50,7 +50,8 @@ class AddRequireDependencyCommand(sublime_plugin.WindowCommand):
         if choice == -1: return
         search = 'poo'
         edit = self.view.begin_edit()
-        self.window.run_command('show_overlay', {'overlay': 'goto', 'text': '@%s' % search})
+        self.window.run_command('show_overlay', {'overlay': 'goto',
+                                                 'text': '@%s' % search})
         # self.view.run_command('insert_snippet',
         #                       {"name": "Packages/User/console-log.sublime-snippet"})
         # self.view.run_command('example')

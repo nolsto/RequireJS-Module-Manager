@@ -2,11 +2,7 @@
 	"folders":
 	[
 		{
-			"path": "~/Projects/RequireDependencyManager",
-			"file_exclude_patterns":
-			[
-				"*.sublime-workspace"
-			]
+			"path": "/Volumes/Work/Users/nstover/Projects/RequireJS Module Manager"
 		}
 	],
 	"settings":
@@ -18,10 +14,10 @@
 			"paths":
 			{
 				"app": "../app",
-				"util": "../util",
 				"common": "../util/common",
 				"print": "../util/common/print.js",
-				"templates": "../../templates"
+				"templates": "../../templates",
+				"util": "../util"
 			}
 		}
 	}
