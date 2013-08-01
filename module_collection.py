@@ -5,6 +5,9 @@ import re
 class ModuleCollection:
 
     def __init__(self, folder, config):
+        # folder is the first folder listed in the project side bar.
+        # config is either the requirejs config json object,
+        # or a path to a json file to be used as the requirejs config.
         self.base_dir = os.path.join(folder, config['appDir'],
                                      config['baseUrl'])
 
