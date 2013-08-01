@@ -2,23 +2,24 @@
 	"folders":
 	[
 		{
-			"path": "/Volumes/Work/Users/nstover/Projects/RequireJS Module Manager"
+			"path": "~/Projects/RequireJS Module Manager"
 		}
 	],
 	"settings":
 	{
-		"requirejs_config":
-		{
-			"appDir": "tests/cases/www",
-			"baseUrl": "js/lib",
-			"paths":
-			{
-				"app": "../app",
-				"common": "../util/common",
-				"print": "../util/common/print.js",
-				"templates": "../../templates",
-				"util": "../util"
-			}
-		}
+		"requirejs_config": "./tests/cases/tools/build.json"
+		// "requirejs_config":
+		// {
+		// 	"appDir": "tests/cases/www",
+		// 	"baseUrl": "js/lib",
+		// 	"paths":
+		// 	{
+		// 		"app": "../app",
+		// 		"common": "../util/common",
+		// 		"print": "../util/common/print.js",
+		// 		"templates": "../../templates",
+		// 		"util": "../util"
+		// 	}
+		// }
 	}
 }

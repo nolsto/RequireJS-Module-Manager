@@ -1,0 +1,12 @@
+{
+  "appDir": "../www",
+  "baseUrl": "js/lib",
+  "paths":
+  {
+    "app": "../app",
+    "util": "../util",
+    "common": "../util/common",
+    "print": "../util/common/print.js",
+    "templates": "../../templates"
+  }
+}
