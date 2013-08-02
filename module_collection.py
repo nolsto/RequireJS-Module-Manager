@@ -2,7 +2,8 @@ import fnmatch
 import json
 import os
 import re
-from pprint import pprint
+from operator import itemgetter
+
 
 def strip_ext_if_js(filename):
     (root, ext) = os.path.splitext(filename)
@@ -17,7 +18,7 @@ class ModuleCollection:
         # folder is the first folder listed in the project side bar.
         # config is either the requirejs config json object,
         # or a path to a json file to be used as the requirejs config.
-        if type(config) is str:
+        if type(config) is unicode:
             config_file = os.path.join(folder, config)
             try:
                 f = open(config_file)
@@ -30,7 +31,6 @@ class ModuleCollection:
         else:
             dirname = folder
 
-        print config
         self.basedir = os.path.normpath(os.path.join(dirname, config['appDir'],
                                         config['baseUrl']))
 
@@ -39,6 +39,7 @@ class ModuleCollection:
 
         for k, v in items:
             self.collection = self.collection + self.collect(v, k)
+        self.collection.sort(key=itemgetter(0))
 
     def collect(self, relpath, modname=''):
         os.chdir(self.basedir)
@@ -61,7 +62,7 @@ class ModuleCollection:
             for filename in filenames:
                 stripped_filename = strip_ext_if_js(filename)
                 module = os.path.normpath(os.path.join(path, stripped_filename))
-                if type(modname) is unicode:
+                if modname:
                     module = os.path.join(modname, module)
                 abspath = os.path.normpath(os.path.join(self.basedir,
                                                         relpath,
@@ -71,12 +72,14 @@ class ModuleCollection:
                 abspaths.append(abspath)
         return zip(modules, abspaths)
 
+    @property
     def items(self):
         return self.collection
 
+    @property
     def ids(self):
-        # return [k for k, v in enumerate(self.collection)]
         return [i[0] for i in self.collection]
 
+    @property
     def resources(self):
         return [i[1] for i in self.collection]

@@ -24,21 +24,21 @@ class ModuleCollectionTest(unittest.TestCase):
 
         module_collection = ModuleCollection(self.folder, config)
 
-        self.assertItemsEqual(module_collection.items(), [
+        self.assertItemsEqual(module_collection.items, [
             ('backbone', pathto(module_collection.basedir, 'backbone.js')),
             ('jquery', pathto(module_collection.basedir, 'jquery.js')),
             ('require', pathto(module_collection.basedir, 'require.js')),
             ('underscore', pathto(module_collection.basedir, 'underscore.js')),
         ])
 
-        self.assertItemsEqual(module_collection.ids(), [
+        self.assertItemsEqual(module_collection.ids, [
             'backbone',
             'jquery',
             'require',
             'underscore',
         ])
 
-        self.assertItemsEqual(module_collection.resources(), [
+        self.assertItemsEqual(module_collection.resources, [
             pathto(module_collection.basedir, 'backbone.js'),
             pathto(module_collection.basedir, 'jquery.js'),
             pathto(module_collection.basedir, 'require.js'),
@@ -57,13 +57,13 @@ class ModuleCollectionTest(unittest.TestCase):
 
         module_collection = ModuleCollection(self.folder, config)
 
-        self.assertItemsEqual(module_collection.items(), [
+        self.assertItemsEqual(module_collection.items, [
             ('app/main', pathto(module_collection.basedir, '../app/main.js')),
         ])
 
-        self.assertItemsEqual(module_collection.ids(), ['app/main'])
+        self.assertItemsEqual(module_collection.ids, ['app/main'])
 
-        self.assertItemsEqual(module_collection.resources(), [
+        self.assertItemsEqual(module_collection.resources, [
             pathto(module_collection.basedir, '../app/main.js'),
         ])
 
@@ -79,13 +79,13 @@ class ModuleCollectionTest(unittest.TestCase):
 
         module_collection = ModuleCollection(self.folder, config)
 
-        self.assertItemsEqual(module_collection.items(), [
+        self.assertItemsEqual(module_collection.items, [
             ('main', pathto(module_collection.basedir, '../app/main.js')),
         ])
 
-        self.assertItemsEqual(module_collection.ids(), ['main'])
+        self.assertItemsEqual(module_collection.ids, ['main'])
 
-        self.assertItemsEqual(module_collection.resources(), [
+        self.assertItemsEqual(module_collection.resources, [
             pathto(module_collection.basedir, '../app/main.js'),
         ])
 
@@ -101,13 +101,13 @@ class ModuleCollectionTest(unittest.TestCase):
 
         module_collection = ModuleCollection(self.folder, config)
 
-        self.assertItemsEqual(module_collection.items(), [
+        self.assertItemsEqual(module_collection.items, [
             ('templates/index.hbs', pathto(module_collection.basedir, '../../templates/index.hbs')),
         ])
 
-        self.assertItemsEqual(module_collection.ids(), ['templates/index.hbs'])
+        self.assertItemsEqual(module_collection.ids, ['templates/index.hbs'])
 
-        self.assertItemsEqual(module_collection.resources(), [
+        self.assertItemsEqual(module_collection.resources, [
             pathto(module_collection.basedir, '../../templates/index.hbs'),
         ])
 
@@ -127,7 +127,7 @@ class ModuleCollectionTest(unittest.TestCase):
 
         module_collection = ModuleCollection(self.folder, config)
 
-        self.assertItemsEqual(module_collection.items(), [
+        self.assertItemsEqual(module_collection.items, [
             ('backbone', pathto(module_collection.basedir, 'backbone.js')),
             ('jquery', pathto(module_collection.basedir, 'jquery.js')),
             ('require', pathto(module_collection.basedir, 'require.js')),
@@ -140,7 +140,7 @@ class ModuleCollectionTest(unittest.TestCase):
             ('templates/index.hbs', pathto(module_collection.basedir, '../../templates/index.hbs')),
         ])
 
-        self.assertItemsEqual(module_collection.ids(), [
+        self.assertItemsEqual(module_collection.ids, [
             'backbone',
             'jquery',
             'require',
@@ -153,7 +153,7 @@ class ModuleCollectionTest(unittest.TestCase):
             'templates/index.hbs',
         ])
 
-        self.assertItemsEqual(module_collection.resources(), [
+        self.assertItemsEqual(module_collection.resources, [
             pathto(module_collection.basedir, 'backbone.js'),
             pathto(module_collection.basedir, 'jquery.js'),
             pathto(module_collection.basedir, 'require.js'),
@@ -167,11 +167,11 @@ class ModuleCollectionTest(unittest.TestCase):
         ])
 
     def test_module_collection_collects_all_with_json_config_file(self):
-        config = './tests/cases/tools/build.json'
+        config = u'./tests/cases/tools/build.json'
 
         module_collection = ModuleCollection(self.folder, config)
 
-        self.assertItemsEqual(module_collection.items(), [
+        self.assertItemsEqual(module_collection.items, [
             ('backbone', pathto(module_collection.basedir, 'backbone.js')),
             ('jquery', pathto(module_collection.basedir, 'jquery.js')),
             ('require', pathto(module_collection.basedir, 'require.js')),
@@ -184,7 +184,7 @@ class ModuleCollectionTest(unittest.TestCase):
             ('templates/index.hbs', pathto(module_collection.basedir, '../../templates/index.hbs')),
         ])
 
-        self.assertItemsEqual(module_collection.ids(), [
+        self.assertItemsEqual(module_collection.ids, [
             'backbone',
             'jquery',
             'require',
@@ -197,7 +197,7 @@ class ModuleCollectionTest(unittest.TestCase):
             'templates/index.hbs',
         ])
 
-        self.assertItemsEqual(module_collection.resources(), [
+        self.assertItemsEqual(module_collection.resources, [
             pathto(module_collection.basedir, 'backbone.js'),
             pathto(module_collection.basedir, 'jquery.js'),
             pathto(module_collection.basedir, 'require.js'),

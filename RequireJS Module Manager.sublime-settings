@@ -4,5 +4,6 @@
 		"appDir": ".",
 		"baseUrl": ".",
 		"paths": {}
-	}
+	},
+  "require_style": "commonjs" //commonjs or amd
 }

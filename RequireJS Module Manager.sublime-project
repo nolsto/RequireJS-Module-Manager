@@ -7,19 +7,6 @@
 	],
 	"settings":
 	{
-		"requirejs_config": "./tests/cases/tools/build.json"
-		// "requirejs_config":
-		// {
-		// 	"appDir": "tests/cases/www",
-		// 	"baseUrl": "js/lib",
-		// 	"paths":
-		// 	{
-		// 		"app": "../app",
-		// 		"common": "../util/common",
-		// 		"print": "../util/common/print.js",
-		// 		"templates": "../../templates",
-		// 		"util": "../util"
-		// 	}
-		// }
+		"requirejs_config": "tests/cases/tools/build.json"
 	}
 }
