@@ -1,9 +1,51 @@
 {
+  // can be either object or path to json file
 	"requirejs_config":
 	{
 		"appDir": ".",
 		"baseUrl": ".",
 		"paths": {}
 	},
-  "require_style": "commonjs" //commonjs or amd
+
+  // one of the template keys defined below
+  "template": "define_template_stacked",
+
+  // various formatting templates for define function
+  "define_template_stacked": [
+    "define([",
+    "    '{{module_a}}',",
+    "    '{{module_b}}',",
+    "    '{{module_c}}'",
+    "], function(",
+    "    {{name_a}},",
+    "    {{name_b}}",
+    ") {",
+    "    {{script}}",
+    "});"
+  ],
+
+  "define_template_split_args": [
+    "define(",
+    "    ['{{module_a}}', '{{module_b}}', '{{module_c}}'],",
+    "    function({{name_a}}, {{name_b}}) {",
+    "        {{script}}",
+    "    }",
+    ");"
+  ],
+
+  "define_template_single_line": [
+    "define(['{{module_a}}', '{{module_b}}', '{{module_c}}'], function({{name_a}}, {{name_b}}) {",
+    "    {{script}}",
+    "});"
+  ],
+
+  "define_template_commonjs": [
+    "define(function (require) {",
+    "    var {{name_a}} = require('{{module_a}}');",
+    "    var {{name_b}} = require('{{module_b}}');",
+    "    require('{{module_c}}');",
+    "",
+    "    {{script}}",
+    "});"
+  ]
 }

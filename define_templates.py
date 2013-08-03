@@ -1,6 +1,5 @@
 class Templates(object):
 
-    # AMD split resources and arguments on lines
     def define_stacked():
         """
         define([
@@ -15,7 +14,6 @@ class Templates(object):
         });
         """
 
-    # AMD split array and function on lines
     def define_split_args():
         """
         define(
@@ -26,7 +24,6 @@ class Templates(object):
         );
         """
 
-    # AMD single-line define
     def define_single_line():
         """
         define(['{{module_a}}', '{{module_b}}', '{{module_c}}'], function({{name_a}}, {{name_b}}) {
@@ -34,7 +31,6 @@ class Templates(object):
         });
         """
 
-    # CommonJS
     def define_commonjs():
         """
         define(function (require) {
