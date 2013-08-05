@@ -1,7 +1,9 @@
 import json
 import os.path
 import unittest
+
 from module_collection import ModuleCollection
+
 
 def pathto(basedir, relpath):
     path = os.path.join(basedir, relpath)
@@ -16,11 +18,10 @@ class ModuleCollectionTest(unittest.TestCase):
 
     def test_module_collection_collects_baseUrl(self):
         config = json.loads("""{
-                "appDir": "tests/cases/www-lib-only",
-                "baseUrl": "js/lib",
-                "paths": {}
-            }
-        """)
+            "appDir": "tests/cases/www-lib-only",
+            "baseUrl": "js/lib",
+            "paths": {}
+        }""")
 
         module_collection = ModuleCollection(self.folder, config)
 
@@ -47,13 +48,12 @@ class ModuleCollectionTest(unittest.TestCase):
 
     def test_module_collection_collects_paths(self):
         config = json.loads("""{
-                "appDir": "tests/cases/www-path-only",
-                "baseUrl": "js/lib",
-                "paths": {
-                    "app": "../app"
-                }
+            "appDir": "tests/cases/www-path-only",
+            "baseUrl": "js/lib",
+            "paths": {
+                "app": "../app"
             }
-        """)
+        }""")
 
         module_collection = ModuleCollection(self.folder, config)
 
@@ -67,15 +67,14 @@ class ModuleCollectionTest(unittest.TestCase):
             pathto(module_collection.basedir, '../app/main.js'),
         ])
 
-    def test_module_collection_collects_path_file(self):
+    def test_module_collection_collects_path_module(self):
         config = json.loads("""{
-                "appDir": "tests/cases/www-path-only",
-                "baseUrl": "js/lib",
-                "paths": {
-                    "main": "../app/main.js"
-                }
+            "appDir": "tests/cases/www-path-only",
+            "baseUrl": "js/lib",
+            "paths": {
+                "main": "../app/main.js"
             }
-        """)
+        }""")
 
         module_collection = ModuleCollection(self.folder, config)
 
@@ -91,13 +90,12 @@ class ModuleCollectionTest(unittest.TestCase):
 
     def test_module_collection_collects_nonjs_with_ext(self):
         config = json.loads("""{
-                "appDir": "tests/cases/www-path-only-nonjs",
-                "baseUrl": "js/lib",
-                "paths": {
-                    "templates": "../../templates"
-                }
+            "appDir": "tests/cases/www-path-only-nonjs",
+            "baseUrl": "js/lib",
+            "paths": {
+                "templates": "../../templates"
             }
-        """)
+        }""")
 
         module_collection = ModuleCollection(self.folder, config)
 
@@ -113,17 +111,16 @@ class ModuleCollectionTest(unittest.TestCase):
 
     def test_module_collection_collects_all(self):
         config = json.loads("""{
-                "appDir": "tests/cases/www",
-                "baseUrl": "js/lib",
-                "paths": {
-                    "app": "../app",
-                    "util": "../util",
-                    "common": "../util/common",
-                    "print": "../util/common/print.js",
-                    "templates": "../../templates"
-                }
+            "appDir": "tests/cases/www",
+            "baseUrl": "js/lib",
+            "paths": {
+                "app": "../app",
+                "util": "../util",
+                "common": "../util/common",
+                "print": "../util/common/print.js",
+                "templates": "../../templates"
             }
-        """)
+        }""")
 
         module_collection = ModuleCollection(self.folder, config)
 
@@ -166,7 +163,7 @@ class ModuleCollectionTest(unittest.TestCase):
             pathto(module_collection.basedir, '../../templates/index.hbs'),
         ])
 
-    def test_module_collection_collects_all_with_json_config_file(self):
+    def test_module_collection_collects_all_from_json_config_file(self):
         config = u'./tests/cases/tools/build.json'
 
         module_collection = ModuleCollection(self.folder, config)

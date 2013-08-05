@@ -8,18 +8,11 @@
 	},
 
   // one of the template keys defined below
-  "template": "define_template_stacked",
+  "template": "define_template_single_line",
 
   // various formatting templates for define function
-  "define_template_stacked": [
-    "define([",
-    "    '{{module_a}}',",
-    "    '{{module_b}}',",
-    "    '{{module_c}}'",
-    "], function(",
-    "    {{name_a}},",
-    "    {{name_b}}",
-    ") {",
+  "define_template_single_line": [
+    "define(['{{module_a}}', '{{module_b}}', '{{module_c}}'], function({{name_a}}, {{name_b}}) {",
     "    {{script}}",
     "});"
   ],
@@ -33,8 +26,15 @@
     ");"
   ],
 
-  "define_template_single_line": [
-    "define(['{{module_a}}', '{{module_b}}', '{{module_c}}'], function({{name_a}}, {{name_b}}) {",
+  "define_template_stacked": [
+    "define([",
+    "    '{{module_a}}',",
+    "    '{{module_b}}',",
+    "    '{{module_c}}'",
+    "], function(",
+    "    {{name_a}},",
+    "    {{name_b}}",
+    ") {",
     "    {{script}}",
     "});"
   ],
