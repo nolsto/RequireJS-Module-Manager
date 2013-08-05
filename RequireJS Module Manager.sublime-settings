@@ -12,15 +12,15 @@
 
   // various formatting templates for define function
   "define_template_single_line": [
-    "define(['{{module_a}}', '{{module_b}}', '{{module_c}}'], function({{name_a}}, {{name_b}}) {",
+    "define(['{{module}}'], function({{name}}) {",
     "    {{script}}",
     "});"
   ],
 
   "define_template_split_args": [
     "define(",
-    "    ['{{module_a}}', '{{module_b}}', '{{module_c}}'],",
-    "    function({{name_a}}, {{name_b}}) {",
+    "    ['{{module}}'],",
+    "    function({{name}}) {",
     "        {{script}}",
     "    }",
     ");"
@@ -28,12 +28,9 @@
 
   "define_template_stacked": [
     "define([",
-    "    '{{module_a}}',",
-    "    '{{module_b}}',",
-    "    '{{module_c}}'",
+    "    '{{module}}'",
     "], function(",
-    "    {{name_a}},",
-    "    {{name_b}}",
+    "    {{name}}",
     ") {",
     "    {{script}}",
     "});"
@@ -41,9 +38,7 @@
 
   "define_template_commonjs": [
     "define(function (require) {",
-    "    var {{name_a}} = require('{{module_a}}');",
-    "    var {{name_b}} = require('{{module_b}}');",
-    "    require('{{module_c}}');",
+    "    var {{name}} = require('{{module}}');",
     "",
     "    {{script}}",
     "});"

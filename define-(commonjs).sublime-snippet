@@ -1,0 +1,9 @@
+<snippet>
+	<content><![CDATA[
+define(${1:'id' }function (${2:require}${3:, exports}${4:, module}) {
+	${0:$TM_SELECTED_TEXT}
+});
+]]></content>
+	<tabTrigger>define</tabTrigger>
+	<scope>source.js</scope>
+</snippet>
