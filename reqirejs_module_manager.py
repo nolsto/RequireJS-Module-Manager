@@ -20,25 +20,49 @@ from module_collection import ModuleCollection
 from template import Template
 
 
+settings_filename = 'RequireJS Module Manager.sublime-settings'
+
 class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
 
     def run(self):
+        self.packages_path = sublime.packages_path()
+
+        # Active view (area that contains the text buffer)
         self.view = self.window.active_view()
+
+        # First folder in the project
         self.folder = self.window.folders()[0]
-        self.settings = sublime.load_settings('RequireJS Module Manager.sublime-settings')
+
+        # Load the settings file for this plugin
+        self.settings = sublime.load_settings(settings_filename)
+
         self.requirejs_config = self.get_setting('requirejs_config')
+
         self.module_collection = ModuleCollection(self.folder,
                                                   self.requirejs_config)
-        self.template = Template(self.get_setting('template'))
+
+        self.define_snippet = self.get_setting('define_template')
+
+        # Absolute path to define snippet file
+        # Need it to open & parse
+        self.define_snippet_path = os.path.join(self.packages_path, '..',
+                                                self.define_snippet)
+
+        # self.template = Template(self.define_snippet)
 
         items = ['> Input path to module...'] + self.module_collection.ids
         self.window.show_quick_panel(items, self.handle_quick_panel_response,
                                      sublime.MONOSPACE_FONT, 0)
 
-    def get_setting(self, prop, override=True):
-        if not override:
-            return self.view.settings().get(prop)
+
+    def get_setting(self, prop):
+        """Load the property
+
+        First attempts to lookup property in the project settings.
+        If it doesn't exist, fall back to this plugin's settings property.
+        """
         return self.view.settings().get(prop, self.settings.get(prop))
+
 
     def handle_quick_panel_response(self, index):
         if index is -1:
@@ -60,15 +84,26 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
         # self.view.run_command('example')
         # self.view.end_edit(edit)
 
+
     def handle_id_or_resource_input(self, input, varname=''):
         self.window.show_input_panel('Module variable name:', varname,
                                      self.handle_varname_input, None, None)
         print 'id/resource: ', input
 
+
     def handle_varname_input(self, input):
         print 'varname: ', input
+        self.create_define_enclosure()
 
-    def create_define_enclosure():
+
+    def create_define_enclosure(self):
         edit = self.view.begin_edit()
 
+        # TODO Find CDATA in snippet and parse it for input blocks
+        f = open(self.define_snippet_path)
+        print f.read()
+        f.close()
+
+        self.view.run_command('insert_snippet',
+                              {'name': self.define_snippet})
         self.view.end_edit(edit)

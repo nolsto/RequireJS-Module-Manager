@@ -1,5 +1,7 @@
 {
-  // can be either object or path to json file
+  // Can be either an object or a path to the json file relative to the first
+  // folder in the project if one exists. eg:
+  //"requirejs_config": "path/to/config.json"
 	"requirejs_config":
 	{
 		"appDir": ".",
@@ -7,40 +9,9 @@
 		"paths": {}
 	},
 
-  // one of the template keys defined below
-  "template": "define_template_single_line",
+  "define_template": "Packages/RequireJS Module Manager/define-(single-line).sublime-snippet",
 
-  // various formatting templates for define function
-  "define_template_single_line": [
-    "define(['{{module}}'], function({{name}}) {",
-    "    {{script}}",
-    "});"
-  ],
-
-  "define_template_split_args": [
-    "define(",
-    "    ['{{module}}'],",
-    "    function({{name}}) {",
-    "        {{script}}",
-    "    }",
-    ");"
-  ],
-
-  "define_template_stacked": [
-    "define([",
-    "    '{{module}}'",
-    "], function(",
-    "    {{name}}",
-    ") {",
-    "    {{script}}",
-    "});"
-  ],
-
-  "define_template_commonjs": [
-    "define(function (require) {",
-    "    var {{name}} = require('{{module}}');",
-    "",
-    "    {{script}}",
-    "});"
-  ]
+  // TODO Figure out how to get this setting into an environment variable
+  //      in the snippet and template.
+  "quote_style": "single" // "single" or "double"
 }

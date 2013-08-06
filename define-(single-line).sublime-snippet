@@ -1,9 +1,10 @@
 <snippet>
 	<content><![CDATA[
-define(${1:'id' }['${2:}'], function(${2:}) {
+define(${1:}[${2:path/to/module}], function(${3:module}) {
 	${0:$TM_SELECTED_TEXT}
 });
 ]]></content>
 	<tabTrigger>define</tabTrigger>
 	<scope>source.js</scope>
+    <description>AMD Define (single line)</description>
 </snippet>
