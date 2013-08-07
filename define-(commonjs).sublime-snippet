@@ -1,12 +1,12 @@
 <snippet>
 	<content><![CDATA[
-define(${1:}function (require) {
-	var ${3:module} = require(${2:path/to/module});
+define(${1:}function (require${2:}) {
+	var ${4:module} = require(${3:path/to/module});
 
 	${0:$TM_SELECTED_TEXT}
 });
 ]]></content>
 	<tabTrigger>define</tabTrigger>
 	<scope>source.js</scope>
-    <description>AMD Define (commonjs style)</description>
+    <description>define (AMD CommonJS wrapper)</description>
 </snippet>

@@ -9,5 +9,5 @@ define(${1:}
 ]]></content>
 	<tabTrigger>define</tabTrigger>
 	<scope>source.js</scope>
-    <description>AMD Define (split arguments)</description>
+    <description>define (AMD split arguments)</description>
 </snippet>

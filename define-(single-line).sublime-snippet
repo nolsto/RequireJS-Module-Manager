@@ -1,10 +1,12 @@
 <snippet>
 	<content><![CDATA[
-define(${1:}[${2:path/to/module}], function(${3:module}) {
+define(${1:}['${2:path/to/module}'], function(${3:${2/[\s_-](.)/\U\1/g}}) {
 	${0:$TM_SELECTED_TEXT}
 });
 ]]></content>
 	<tabTrigger>define</tabTrigger>
 	<scope>source.js</scope>
-    <description>AMD Define (single line)</description>
+    <description>define (AMD single line)</description>
 </snippet>
+<!-- define(${1:}['${2:path/to/module}'], function(${3:${2/(^.*/)[\s_-](.)/\U\1/g}}) {
+ -->

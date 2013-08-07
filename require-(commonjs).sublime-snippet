@@ -4,4 +4,5 @@ var ${1:module} = require('${2:path/to/module}');
 ]]></content>
 	<tabTrigger>require</tabTrigger>
 	<scope>source.js</scope>
+    <description>require (CommonJS)</description>
 </snippet>

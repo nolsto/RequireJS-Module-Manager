@@ -10,5 +10,5 @@ define(${1:}[
 ]]></content>
 	<tabTrigger>define</tabTrigger>
 	<scope>source.js</scope>
-    <description>AMD Define (stacked listings)</description>
+    <description>define (AMD stacked items)</description>
 </snippet>
