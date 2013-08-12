@@ -6,5 +6,5 @@ define(${1:}['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_P
 ]]></content>
 	<tabTrigger>define</tabTrigger>
 	<scope>source.js</scope>
-    <description>define (AMD single line)</description>
+	<description>define (AMD single line)</description>
 </snippet>
