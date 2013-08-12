@@ -1,7 +1,7 @@
 <snippet>
 	<content><![CDATA[
 define(${1:}function (require${2:}) {
-	var ${4:module} = require(${3:path/to/module});
+	var ${4:$TM_MODULE_NAME_PLACEHOLDER} = require(${3:$TM_MODULE_PATH_PLACEHOLDER});
 
 	${0:$TM_SELECTED_TEXT}
 });

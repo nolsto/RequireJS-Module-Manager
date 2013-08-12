@@ -1,9 +1,9 @@
 <snippet>
 	<content><![CDATA[
 define(${1:}[
-	${2:path/to/module}
+	${2:$TM_MODULE_PATH_PLACEHOLDER}
 ], function(
-	${3:module}
+	${3:$TM_MODULE_NAME_PLACEHOLDER}
 ) {
 	${0:$TM_SELECTED_TEXT}
 });

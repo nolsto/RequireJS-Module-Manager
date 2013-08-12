@@ -1,8 +1,10 @@
 <snippet>
 	<content><![CDATA[
-var ${1:module} = require('${2:path/to/module}');
+var ${2:$TM_MODULE_NAME_PLACEHOLDER} = require('${1:$TM_MODULE_PATH_PLACEHOLDER}');
 ]]></content>
 	<tabTrigger>require</tabTrigger>
 	<scope>source.js</scope>
     <description>require (CommonJS)</description>
 </snippet>
+<!-- var ${2:${1/[\s_-](.)/\U\1/g}} = require('${1:path/to/module}');
+ -->

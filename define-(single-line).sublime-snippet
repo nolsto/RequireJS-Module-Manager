@@ -1,6 +1,6 @@
 <snippet>
 	<content><![CDATA[
-define(${1:}['${2:path/to/module}'], function(${3:${2/[\s_-](.)/\U\1/g}}) {
+define(${1:}['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_PLACEHOLDER}) {
 	${0:$TM_SELECTED_TEXT}
 });
 ]]></content>
@@ -8,5 +8,3 @@ define(${1:}['${2:path/to/module}'], function(${3:${2/[\s_-](.)/\U\1/g}}) {
 	<scope>source.js</scope>
     <description>define (AMD single line)</description>
 </snippet>
-<!-- define(${1:}['${2:path/to/module}'], function(${3:${2/(^.*/)[\s_-](.)/\U\1/g}}) {
- -->
