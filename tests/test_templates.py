@@ -20,11 +20,9 @@ define(${1:}['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_P
     <description>define (AMD single line)</description>
 </snippet>"""
 
-        snippet_content = """
-define(${1:}['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_PLACEHOLDER}) {
+        snippet_content = """define(${1:}['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_PLACEHOLDER}) {
     ${0:$TM_SELECTED_TEXT}
-});
-"""
+});"""
 
         self.assertEqual(get_content_from_snippet(snippet), snippet_content)
 

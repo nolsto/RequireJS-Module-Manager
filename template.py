@@ -67,11 +67,11 @@ import re
 
 
 snippet_cdata_regex = re.compile(r"""
-    <content>\s*
-    (?:<!\[CDATA\[)?
-    (?P<content>.*?)
-    (?:\]\]>)?\s*
-    <\/content>
+    <content>\s*                    # opening content tag
+    (?:<!\[CDATA\[)?(?:\n|\r\n?)?   # optional CDATA tag
+    (?P<content>.+?)                # the template content itself
+    (?=(?:(?:\n|\r\n?)?\]\]>)?\s*   # begin lookahead to optional CDATA close
+    <\/content>)                    # end lookahead on content tag close
 """, re.VERBOSE | re.DOTALL)
 
 
@@ -98,7 +98,7 @@ class Template:
         # print match.group('args')
         # print match.groups()
         # return match is not None
-        pass
+        return True
 
     def parse(self, string_input):
         # match = parse_define_regex.search(string_input)
