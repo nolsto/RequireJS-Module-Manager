@@ -32,7 +32,7 @@ define(${1:}['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_P
         snippet_content = """define(${1:}['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_PLACEHOLDER}) {
     ${0:$TM_SELECTED_TEXT}
 });"""
-        content = """define(${1:}[{{module}}], function(${3:$TM_MODULE_NAME_PLACEHOLDER}) {
+        content = """define(${1:}[{{module}}], function({{name}}) {
     ${0:$TM_SELECTED_TEXT}
 });"""
 

@@ -1,5 +1,5 @@
 import re
-
+from pprint import pprint
 
 # define_regex = re.compile(r"""
 #     ^define\s*\(\s*               # define invocation
@@ -74,23 +74,40 @@ snippet_content_regex = re.compile(r"""
     <\/content>)                    # end lookahead on content tag close
 """, re.VERBOSE | re.DOTALL)
 
-snippet_module_name_token_regex = re.compile(r"\${\d:\$TM_MODULE_NAME_PLACEHOLDER}")
+snippet_module_name_token_pattern = r"""(?P<name>\${\d:\$TM_MODULE_NAME_PLACEHOLDER})"""
 
-snippet_module_path_token_regex = re.compile(r"""
-    (?P<quote>['"])                     # opening quote
-    \${\d:\$TM_MODULE_PATH_PLACEHOLDER} # token
-    (?<!\\)(?P=quote)                   # closing quote not preceded by backslash
-""", re.VERBOSE)
+snippet_module_path_token_pattern = \
+    r"""(?P<openquote>['"])(?P<path>\${\d:\$TM_MODULE_PATH_PLACEHOLDER})(?P<endquote>(?P=openquote))"""
 
+snippet_selected_text_token_pattern = r"""(?P<selectedtext>\${\d:\$TM_SELECTED_TEXT})"""
 
 def get_content_from_snippet(snippet):
     match = snippet_content_regex.search(snippet)
     return match.group('content')
 
 def replace_tokens_in_snippet_content(string):
-    match = snippet_module_path_token_regex.search(string)
-    print match.group('quote')
-    return snippet_module_path_token_regex.sub('{{module}}', string)
+    # repl = {'path': '{{path}}', 'name': '{{name}}'}
+    regex = re.compile("%s(.+)%s(.+)%s" % (
+        snippet_module_path_token_pattern,
+        snippet_module_name_token_pattern,
+        snippet_selected_text_token_pattern
+    ), re.DOTALL)
+    match = regex.search(string)
+
+    print match.string[:match.start('path')]
+    print match.string[match.start('path'):match.end('path')]
+    print match.string[match.end('path'):match.start('name')]
+    print match.string[match.start('name'):match.end('name')]
+    print match.string[match.end('name'):match.start('selectedtext')]
+    print match.string[match.start('selectedtext'):match.end('selectedtext')]
+    print match.string[match.end('selectedtext'):]
+
+    # print match.start(), match.end()
+    # pprint(regex.split(string))
+    # print regex.split(string)
+    # print (match.group('path'), match.group('name'))
+    return
+    # return regex.sub('{{module}}', string)
 
 
 class Template:
