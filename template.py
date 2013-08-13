@@ -66,7 +66,7 @@ import re
 # """, re.VERBOSE|re.MULTILINE)
 
 
-snippet_cdata_regex = re.compile(r"""
+snippet_content_regex = re.compile(r"""
     <content>\s*                    # opening content tag
     (?:<!\[CDATA\[)?(?:\n|\r\n?)?   # optional CDATA tag
     (?P<content>.+?)                # the template content itself
@@ -74,10 +74,23 @@ snippet_cdata_regex = re.compile(r"""
     <\/content>)                    # end lookahead on content tag close
 """, re.VERBOSE | re.DOTALL)
 
+snippet_module_name_token_regex = re.compile(r"\${\d:\$TM_MODULE_NAME_PLACEHOLDER}")
+
+snippet_module_path_token_regex = re.compile(r"""
+    (?P<quote>['"])                     # opening quote
+    \${\d:\$TM_MODULE_PATH_PLACEHOLDER} # token
+    (?<!\\)(?P=quote)                   # closing quote not preceded by backslash
+""", re.VERBOSE)
+
 
 def get_content_from_snippet(snippet):
-    match = snippet_cdata_regex.search(snippet)
+    match = snippet_content_regex.search(snippet)
     return match.group('content')
+
+def replace_tokens_in_snippet_content(string):
+    match = snippet_module_path_token_regex.search(string)
+    print match.group('quote')
+    return snippet_module_path_token_regex.sub('{{module}}', string)
 
 
 class Template:
