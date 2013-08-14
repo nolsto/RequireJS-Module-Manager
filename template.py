@@ -74,16 +74,43 @@ snippet_content_regex = re.compile(r"""
     <\/content>)                    # end lookahead on content tag close
 """, re.VERBOSE | re.DOTALL)
 
-snippet_module_name_token_pattern = r"""(?P<name>\${\d:\$TM_MODULE_NAME_PLACEHOLDER})"""
+snippet_unrelated_token_regex = re.compile(r"""
+    (\${\d:
+    (?!                                 # begin negative lookahead with:
+    (?:\$TM_MODULE_PATH_PLACEHOLDER)|   # path token,
+    (?:\$TM_MODULE_NAME_PLACEHOLDER)|   # or name token,
+    (?:\$TM_SELECTED_TEXT)              # or selected text token.
+    )                                   # end negative lookahead
+    })
+""", re.VERBOSE | re.MULTILINE)
 
-snippet_module_path_token_pattern = \
-    r"""(?P<openquote>['"])(?P<path>\${\d:\$TM_MODULE_PATH_PLACEHOLDER})(?P<endquote>(?P=openquote))"""
+snippet_module_path_token_pattern = r"""
+    (?P<openquote>['"])             # opening quote: single or double quote
+    (?P<path>\${\d:\$               # beginning of token and path group
+    TM_MODULE_PATH_PLACEHOLDER      # module path environment variable
+    })                              # end of token and group
+    (?P<endquote>(?P=openquote))    # closing quote: same as captured type
+"""
 
-snippet_selected_text_token_pattern = r"""(?P<selectedtext>\${\d:\$TM_SELECTED_TEXT})"""
+snippet_module_name_token_pattern = r"""
+    (?P<name>\${\d:\$               # beginning of token and name group
+    TM_MODULE_NAME_PLACEHOLDER      # module name environment variable
+    })                              # end of token and group
+"""
+
+snippet_selected_text_token_pattern = r"""
+    (?P<selectedtext>\${\d:\$       # beginning of token and selectedtext group
+    TM_SELECTED_TEXT                # selected text environment variable
+    })                              # end of token and group
+"""
+
 
 def get_content_from_snippet(snippet):
     match = snippet_content_regex.search(snippet)
     return match.group('content')
+
+def remove_unrelated_tokens_in_snippet_content(string):
+    return snippet_unrelated_token_regex.sub('', string)
 
 def replace_tokens_in_snippet_content(string):
     # repl = {'path': '{{path}}', 'name': '{{name}}'}
@@ -91,19 +118,19 @@ def replace_tokens_in_snippet_content(string):
         snippet_module_path_token_pattern,
         snippet_module_name_token_pattern,
         snippet_selected_text_token_pattern
-    ), re.DOTALL)
+    ), re.VERBOSE | re.DOTALL | re.MULTILINE)
     match = regex.search(string)
 
-    print match.string[:match.start('path')]
-    print match.string[match.start('path'):match.end('path')]
-    print match.string[match.end('path'):match.start('name')]
-    print match.string[match.start('name'):match.end('name')]
-    print match.string[match.end('name'):match.start('selectedtext')]
-    print match.string[match.start('selectedtext'):match.end('selectedtext')]
-    print match.string[match.end('selectedtext'):]
+    print '"%s"' % (match.string[:match.start('path')])
+    print '"%s"' % (match.string[match.start('path'):match.end('path')])
+    print '"%s"' % (match.string[match.end('path'):match.start('name')])
+    print '"%s"' % (match.string[match.start('name'):match.end('name')])
+    print '"%s"' % (match.string[match.end('name'):match.start('selectedtext')])
+    print '"%s"' % (match.string[match.start('selectedtext'):match.end('selectedtext')])
+    print '"%s"' % (match.string[match.end('selectedtext'):])
 
     # print match.start(), match.end()
-    # pprint(regex.split(string))
+    print regex.split(string)
     # print regex.split(string)
     # print (match.group('path'), match.group('name'))
     return

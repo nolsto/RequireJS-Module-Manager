@@ -1,6 +1,7 @@
 import unittest
 
 from template import get_content_from_snippet, \
+                     remove_unrelated_tokens_in_snippet_content, \
                      replace_tokens_in_snippet_content, \
                      Template
 
@@ -9,6 +10,7 @@ class TemplatesTest(unittest.TestCase):
 
     def setUp(self):
         pass
+
 
     def test_finds_content(self):
         snippet = """<snippet>
@@ -28,15 +30,28 @@ define(${1:}['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_P
 
         self.assertEqual(get_content_from_snippet(snippet), snippet_content)
 
-    def test_replaces_tokens(self):
+
+    def test_removes_unrelated_tokens(self):
         snippet_content = """define(${1:}['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_PLACEHOLDER}) {
     ${0:$TM_SELECTED_TEXT}
 });"""
-        content = """define(${1:}[{{module}}], function({{name}}) {
+        content = """define(['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_PLACEHOLDER}) {
+    ${0:$TM_SELECTED_TEXT}
+});"""
+
+        self.assertEqual(remove_unrelated_tokens_in_snippet_content(snippet_content), content)
+
+
+    def test_replaces_tokens(self):
+        snippet_content = """define(['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_PLACEHOLDER}) {
+    ${0:$TM_SELECTED_TEXT}
+});"""
+        content = """define([{{module}}], function({{name}}) {
     ${0:$TM_SELECTED_TEXT}
 });"""
 
         self.assertEqual(replace_tokens_in_snippet_content(snippet_content), content)
+
 
     # def test_single_line_template_is_valid(self):
     #     string_list = [
@@ -48,6 +63,7 @@ define(${1:}['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_P
 
     #     self.assertTrue(template.validate())
 
+
     def test_single_line_template_is_valid(self):
         string = """
 define(${1:}['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_PLACEHOLDER}) {
@@ -57,6 +73,7 @@ define(${1:}['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_P
         template = Template(string)
 
         self.assertTrue(template.validate())
+
 
     def test_split_args_template_is_valid(self):
         # string_list = [
