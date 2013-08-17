@@ -1,0 +1,12 @@
+{
+	"folders":
+	[
+		{
+			"path": "~/Projects/RequireJS Module Manager"
+		}
+	],
+	"settings":
+	{
+		"requirejs_config": "tests/cases/tools/build.json"
+	}
+}

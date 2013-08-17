@@ -1,9 +1,9 @@
 import unittest
 
-from template import get_content_from_snippet, \
-                     remove_unrelated_tokens_in_snippet_content, \
-                     replace_tokens_in_snippet_content, \
-                     Template
+from template import Template
+from util import get_content_from_snippet, \
+                 remove_unrelated_tokens_in_snippet_content, \
+                 parse_snippet_content
 
 
 class TemplatesTest(unittest.TestCase):
@@ -15,7 +15,7 @@ class TemplatesTest(unittest.TestCase):
     def test_finds_content(self):
         snippet = """<snippet>
     <content><![CDATA[
-define(${1:}['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_PLACEHOLDER}) {
+define(${1:}['${2:$MODULE_PATH_PLACEHOLDER}'], function(${3:$MODULE_NAME_PLACEHOLDER}) {
     ${0:$TM_SELECTED_TEXT}
 });
 ]]></content>
@@ -24,7 +24,7 @@ define(${1:}['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_P
     <description>define (AMD single line)</description>
 </snippet>"""
 
-        snippet_content = """define(${1:}['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_PLACEHOLDER}) {
+        snippet_content = """define(${1:}['${2:$MODULE_PATH_PLACEHOLDER}'], function(${3:$MODULE_NAME_PLACEHOLDER}) {
     ${0:$TM_SELECTED_TEXT}
 });"""
 
@@ -32,10 +32,10 @@ define(${1:}['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_P
 
 
     def test_removes_unrelated_tokens(self):
-        snippet_content = """define(${1:}['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_PLACEHOLDER}) {
+        snippet_content = """define(${1:}['${2:$MODULE_PATH_PLACEHOLDER}'], function(${3:$MODULE_NAME_PLACEHOLDER}) {
     ${0:$TM_SELECTED_TEXT}
 });"""
-        content = """define(['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_PLACEHOLDER}) {
+        content = """define(['${2:$MODULE_PATH_PLACEHOLDER}'], function(${3:$MODULE_NAME_PLACEHOLDER}) {
     ${0:$TM_SELECTED_TEXT}
 });"""
 
@@ -43,88 +43,125 @@ define(${1:}['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_P
 
 
     def test_replaces_tokens(self):
-        snippet_content = """define(['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_PLACEHOLDER}) {
+        snippet_content = """define(['${2:$MODULE_PATH_PLACEHOLDER}'], function(${3:$MODULE_NAME_PLACEHOLDER}) {
     ${0:$TM_SELECTED_TEXT}
 });"""
-        content = """define([{{module}}], function({{name}}) {
+        content = {'frag1': 'define([',
+                   'path_ind': None,
+                   'quote': "'",
+                   'path': '${2:$MODULE_PATH_PLACEHOLDER}',
+                   'frag2': '], function(',
+                   'name_ind': None,
+                   'name': '${3:$MODULE_NAME_PLACEHOLDER}',
+                   'frag3': ') {\n',
+                   'text_ind': '    ',
+                   'text': '${0:$TM_SELECTED_TEXT}',
+                   'frag4': '\n});'}
+
+        self.assertDictEqual(parse_snippet_content(snippet_content), content)
+
+
+    def test_replaces_tokens_2(self):
+        snippet_content = """define([ '${2:$MODULE_PATH_PLACEHOLDER}' ], function( ${3:$MODULE_NAME_PLACEHOLDER} ) {
     ${0:$TM_SELECTED_TEXT}
 });"""
+        content = {'frag1': 'define([ ',
+                   'path_ind': None,
+                   'quote': "'",
+                   'path': '${2:$MODULE_PATH_PLACEHOLDER}',
+                   'frag2': ' ], function( ',
+                   'name_ind': None,
+                   'name': '${3:$MODULE_NAME_PLACEHOLDER}',
+                   'frag3': ' ) {\n',
+                   'text_ind': '    ',
+                   'text': '${0:$TM_SELECTED_TEXT}',
+                   'frag4': '\n});'}
 
-        self.assertEqual(replace_tokens_in_snippet_content(snippet_content), content)
+        self.assertDictEqual(parse_snippet_content(snippet_content), content)
 
 
-    # def test_single_line_template_is_valid(self):
-    #     string_list = [
-    #         r"define(['module_a', '/path/to/mo\'dule_b', '!text/module_c.hbs'], function(name_a, name_b) {",
-    #         "    script",
-    #         "});"
-    #     ]
-    #     template = Template(string_list)
-
-    #     self.assertTrue(template.validate())
-
-
-    def test_single_line_template_is_valid(self):
-        string = """
-define(${1:}['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_PLACEHOLDER}) {
+    def test_replaces_tokens_3(self):
+        snippet_content = """define([
+    '${2:$MODULE_PATH_PLACEHOLDER}'
+], function(
+    ${3:$MODULE_NAME_PLACEHOLDER}
+) {
     ${0:$TM_SELECTED_TEXT}
+});"""
+        content = {'frag1': 'define([\n',
+                   'path_ind': '    ',
+                   'quote': "'",
+                   'path': '${2:$MODULE_PATH_PLACEHOLDER}',
+                   'frag2': '\n], function(\n',
+                   'name_ind': '    ',
+                   'name': '${3:$MODULE_NAME_PLACEHOLDER}',
+                   'frag3': '\n) {\n',
+                   'text_ind': '    ',
+                   'text': '${0:$TM_SELECTED_TEXT}',
+                   'frag4': '\n});'}
+
+        self.assertDictEqual(parse_snippet_content(snippet_content), content)
+
+
+    def test_replaces_tokens_4(self):
+        snippet_content = """define (
+[
+    '${2:$MODULE_PATH_PLACEHOLDER}'
+],
+function (
+    ${3:$MODULE_NAME_PLACEHOLDER}
+)
+{
+    ${0:$TM_SELECTED_TEXT}
+}
+);"""
+        content = {'frag1': 'define (\n[\n',
+                   'path_ind': '    ',
+                   'quote': "'",
+                   'path': '${2:$MODULE_PATH_PLACEHOLDER}',
+                   'frag2': '\n],\nfunction (\n',
+                   'name_ind': '    ',
+                   'name': '${3:$MODULE_NAME_PLACEHOLDER}',
+                   'frag3': '\n)\n{\n',
+                   'text_ind': '    ',
+                   'text': '${0:$TM_SELECTED_TEXT}',
+                   'frag4': '\n}\n);'}
+
+        self.assertDictEqual(parse_snippet_content(snippet_content), content)
+
+    def test_is_found_in_script(self):
+        fragments = {'frag1': 'define([',
+                     'path_ind': None,
+                     'quote': "'",
+                     'path': '${2:$MODULE_PATH_PLACEHOLDER}',
+                     'frag2': '], function(',
+                     'name_ind': None,
+                     'name': '${3:$MODULE_NAME_PLACEHOLDER}',
+                     'frag3': ') {\n',
+                     'text_ind': '    ',
+                     'text': '${0:$TM_SELECTED_TEXT}',
+                     'frag4': '\n});'}
+        script = """
+define(['path/to/module'], function(module) {
+    // rest of the code here
+    module.doSomething();
 });
 """
-        template = Template(string)
+        template = Template(fragments)
 
-        self.assertTrue(template.validate())
+        self.assertTrue(template.is_found_in(script))
 
 
     def test_split_args_template_is_valid(self):
-        # string_list = [
-        #     "define(",
-        #     "    ['{{module}}'],",
-        #     "    function({{name}}) {",
-        #     "        {{script}}",
-        #     "    }",
-        #     ");"
-        # ]
-        # template = Template(string_list)
-
-        # self.assertTrue(template.validate())
         pass
+
 
     def test_stacked_template_is_valid(self):
-        # string_list = [
-        #     "define([",
-        #     "    '{{module}}'",
-        #     "], function(",
-        #     "    {{name}}",
-        #     ") {",
-        #     "    {{script}}",
-        #     "});"
-        # ]
-        # template = Template(string_list)
-
-        # self.assertTrue(template.validate())
         pass
 
-    # def test_commonjs_template_is_valid(self):
-    #     string_list = [
-    #         "define(function (require) {",
-    #         "    var {{name}} = require('{{module}}');",
-    #         "",
-    #         "    {{script}}",
-    #         "});"
-    #     ]
-    #     template = Template(string_list)
 
-    #     self.assertTrue(template.validate())
-
-    # def test_parses_string_input(self):
-    #     string_buffer = """define ([ "module_a", "path/to/module_b", "./module_c", "!text/module_d.hbs" ],
-    #                 function (moduleA, _moduleB, $moduleC, moduleD) {
-
-    #                 });
-    #     """
-    #     # print string_buffer
-    #     # parse_define_regex.match(string_buffer)
-    #     self.assertIsNotNone(parse_define_regex.match(string_buffer))
+    def test_commonjs_template_is_valid(self):
+        pass
 
 
 if __name__ == '__main__':

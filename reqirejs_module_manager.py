@@ -16,6 +16,7 @@ import sublime, sublime_plugin
 import os
 from itertools import chain
 
+import util
 from module_collection import ModuleCollection
 from template import Template
 
@@ -29,6 +30,13 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
 
         # Active view (area that contains the text buffer)
         self.view = self.window.active_view()
+
+        # print self.view.sel()[0]
+        # print self.view.lines(self.view.sel()[0])
+        # print self.view.find_by_selector('source.js')
+        # print self.view.get_regions('import')
+        # print self.view.extract_scope()
+        self.view.run_command('expand_selection', {'to': 'brackets'})
 
         # First folder in the project
         self.folder = self.window.folders()[0]
@@ -96,14 +104,18 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
         self.create_define_enclosure()
 
 
-    def create_define_enclosure(self):
-        edit = self.view.begin_edit()
+    # def create_define_enclosure(self):
+    #     edit = self.view.begin_edit()
 
-        # TODO Find CDATA in snippet and parse it for input blocks
-        f = open(self.define_snippet_path)
-        print f.read()
-        f.close()
+    #     # TODO Find CDATA in snippet and parse it for input blocks
+    #     f = open(self.define_snippet_path)
+    #     snippet = f.read()
+    #     f.close()
 
-        self.view.run_command('insert_snippet',
-                              {'name': self.define_snippet})
-        self.view.end_edit(edit)
+    #     snippet_content = util.get_content_from_snippet(snippet)
+    #     snippet_content = util.remove_unrelated_tokens_in_snippet_content(snippet_content)
+    #     template_fragments = util.parse_snippet_content(snippet_content)
+
+    #     # self.view.run_command('insert_snippet',
+    #     #                       {'name': self.define_snippet})
+    #     self.view.end_edit(edit)

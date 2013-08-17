@@ -1,6 +1,6 @@
 <snippet>
 	<content><![CDATA[
-define(${1:}['${2:$TM_MODULE_PATH_PLACEHOLDER}'], function(${3:$TM_MODULE_NAME_PLACEHOLDER}) {
+define(${1:}['${2:$MODULE_PATH_PLACEHOLDER}'], function(${3:$MODULE_NAME_PLACEHOLDER}) {
 	${0:$TM_SELECTED_TEXT}
 });
 ]]></content>
