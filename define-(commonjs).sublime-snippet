@@ -1,6 +1,6 @@
 <snippet>
 	<content><![CDATA[
-define(${1:}function (require${2:}) {
+define(${1:}function (require${2:, exports, module}) {
 	var ${4:$MODULE_NAME_PLACEHOLDER} = require('${3:$MODULE_PATH_PLACEHOLDER}');
 
 	${0:$TM_SELECTED_TEXT}
