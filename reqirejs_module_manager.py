@@ -25,20 +25,18 @@ from template import Template
 
 settings_filename = 'RequireJS Module Manager.sublime-settings'
 
-# matches a string enclosed by either quotation marks,
-# square brackets or parenthesis
-regex = re.compile(r"""
-    (?P<string>^                    # captured is a string in quotations
-        (?P<quote>['"])             # opening quote (single or double)
-        .*
-        (?<!\\)(?P=quote)           # unescaped closing quote (same as above)
-    $)|
-    (?P<array>^                     # captured is array in square brackets
-        \[.*\]
-    $)|
-    (?P<args>^                      # captured is arguments in parenthesis
-        \(.*\)
-    $)
+# matches characters enclosed in (included) square brackets or parenthesis
+list_regex = re.compile(r"""
+    (?P<array>^\[.*\]$)             # captured is an array in square brackets
+    |                               # or,
+    (?P<args>^\(.*\)$)              # captured is argument(s) in parenthesis
+""", re.VERBOSE | re.DOTALL)
+
+# matches all strings enclosed in quotation marks
+string_regex = re.compile(r"""
+    (?P<quote>['"])                 # opening quote (single or double)
+    .*?                             # lazy repeat--allows multiple captures
+    (?<!\\)(?P=quote)               # unescaped closing quote (same as above)
 """, re.VERBOSE)
 
 
@@ -91,13 +89,11 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
         selection = self.view.substr(original_region)
 
         while True:
-            match = regex.search(selection)
+            match = list_regex.search(selection)
             if match:
-                print match.groupdict()
-                # print match.groups()
                 # the selection is either an array or an arguments list
                 # pass it on and then stop looping
-                # self.extract(**match.groupdict())
+                self.extract(**match.groupdict())
                 break
 
             # expand the selection's scope
@@ -118,19 +114,25 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
         print array, args
 
         if array:
-            # TODO parse items in array and generate list
-            # TODO start searching to right of region for arguments list
-            # TODO parse the arguments list and create mapping with array list
-            # show quick response panel with added items above
+            # TODO:
+            # Look for `define(` to left of the array (should allow for an
+            #   optional module name argument).
+            # Look for `), function(...)` to right of the array
+            # Parse strings in array and generate list
+            # Split arguments on commas and generate list
+            # Create dictionary of key-value pairs with arguments and array items
+            # Quick response panel with added items above
+
             self.window.show_quick_panel(self.items,
                                          self.handle_path_panel_response,
                                          sublime.MONOSPACE_FONT, 0)
         elif args:
-            # TODO parse items in arguments
+            # TODO:
+            # Look for `require` to left of the args
+            # parse arguments and exit if the returned is not a single string
+            # look for `var = ` to left of `require`
+            # Create key-value pair with variable name and argument string
             # show quick response panel with added items above
-            self.window.show_quick_panel(self.name_items,
-                                         self.handle_name_panel_response,
-                                         sublime.MONOSPACE_FONT, 0)
             pass
 
 
