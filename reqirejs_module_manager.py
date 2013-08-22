@@ -88,12 +88,20 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
         region = original_region
 
         while True:
-            # search the contents of the selected region
-            match = list_regex.search(self.view.substr(region))
-            if match:
-                # the selection is either an array or an arguments list
-                # pass it to extract method and then stop looping
-                self.extract(**match.groupdict())
+            # find the syntax scope of the selected region
+            scope_is_array = bool(self.view.score_selector(region.begin(),
+                                  'meta.brace.square'))
+            scope_is_args = bool(self.view.score_selector(region.begin(),
+                                 'meta.brace.round'))
+            if scope_is_array:
+                # the selection is an array,
+                # pass it to an extract method and then stop looping
+                self.extract_from_array(region)
+                break
+            elif scope_is_args:
+                # the selection is an arguments list,
+                # pass it to an extract method and then stop looping
+                self.extract_from_args(region)
                 break
 
             # expand the selection's scope
@@ -116,14 +124,7 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
         # self.view.show(original_region)
 
 
-    def extract(self, array, args):
-        if array:
-            self.extract_from_array(array)
-        elif args:
-            self.extract_from_args(args)
-
-
-    def extract_from_array(self, array):
+    def extract_from_array(self, region):
         # TODO:
         # Look for `define(` to left of the array (should allow for an
         #   optional module name argument).
@@ -134,26 +135,37 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
         # Quick response panel with added items above
 
         buffer_string = self.view.substr(sublime.Region(0, self.view.size()))
-
-        original_region = self.view.sel()[0]
-        region = original_region
         point = region.begin() - 1
 
         while True:
-            # get point at beginning of region
-            # move backwards one character
             # if it is whitespace, loop
             # if it is a comment, expand region to scope and loop
             # if it is a comma, loop and look for a string
+            # move point backwards one character and loop
+
+            scope_is_comment = bool(self.view.score_selector(point, 'comment'))
 
             char = self.view.substr(point)
+            char_is_whitespace = bool(re.match(r'\s', char))
 
             if char == u'\x00':
                 # char is null unicode character--we're at the beginning of
                 # the buffer and need to stop looping
                 break
 
-            print self.view.scope_name(point)
+            if char_is_whitespace:
+                point -= 1
+                continue
+
+            if scope_is_comment:
+                point = self.view.extract_scope(point).begin() - 1
+                continue
+
+            if self.view.score_selector(point, 'meta.delimiter.object.comma'):
+                # TODO: loop but make sure next meaningful iteration
+                # finds a string
+                print 'comma', point
+            # print self.view.scope_name(point)
 
             # self.view.run_command('move', {'by': 'characters', 'forward': False})
             # new_region = self.view.sel()[0]
@@ -180,7 +192,7 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
         #                              sublime.MONOSPACE_FONT, 0)
 
 
-    def extract_from_args(self, args):
+    def extract_from_args(self, region):
         # TODO:
         # Look for `require` to left of the args
         # parse arguments and exit if the returned is not a single string
