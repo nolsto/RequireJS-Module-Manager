@@ -7,11 +7,5 @@
 		"appDir": ".",
 		"baseUrl": ".",
 		"paths": {}
-	},
-
-  "define_template": "Packages/RequireJS Module Manager/define-(single-line).sublime-snippet",
-
-  // TODO Figure out how to get this setting into an environment variable
-  //      in the snippet and template.
-  "quote_style": "single" // "single" or "double"
+	}
 }

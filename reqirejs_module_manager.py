@@ -10,65 +10,25 @@ from template import Template
 
 
 settings_filename = 'RequireJS Module Manager.sublime-settings'
-
-# matches characters enclosed in (included) square brackets or parenthesis
-list_regex = re.compile(r"""
-    (?P<array>^\[.*\]$)             # captured is an array in square brackets
-    |                               # or,
-    (?P<args>^\(.*\)$)              # captured is argument(s) in parenthesis
-""", re.VERBOSE + re.DOTALL)
-
-# matches all strings enclosed in quotation marks
-string_pattern = r"""
-    (?P<quote>['"])                 # opening quote (single or double)
-    .*?                             # lazy repeat--allows multiple captures
-    (?<!\\)(?P=quote)               # unescaped closing quote (same as above)
-"""
-string_regex = re.compile(string_pattern, re.VERBOSE)
-
-js_comment_regex = re.compile(r"""
-    (/\*(?:[^*]|\*[^/])*\*/)        # multi-line comment
-    |                               # or,
-    (?://(.*)$)                     # single-line comment
-""", re.VERBOSE + re.MULTILINE)
-
-# matches a define function call with optional module name argument
-# if it is at the end of the string.
-# should be run after stripping js comments and whitespace
-define_regex = re.compile(r'define\((%s,)?$' % (string_pattern), re.VERBOSE)
-
-function_regex = re.compile(r'^\),function\(')
+# Load the settings file for this plugin
+settings = sublime.load_settings(settings_filename)
 
 
 class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
 
     def run(self):
-        self.packages_path = sublime.packages_path()
-
         # Active view (area that contains the text buffer)
         self.view = self.window.active_view()
 
         # First folder in the project
         self.folder = self.window.folders()[0]
 
-        # Load the settings file for this plugin
-        self.settings = sublime.load_settings(settings_filename)
-
         self.requirejs_config = self.get_setting('requirejs_config')
 
         self.module_collection = ModuleCollection(self.folder,
                                                   self.requirejs_config)
 
-        self.define_snippet = self.get_setting('define_template')
-
-        # Absolute path to define snippet file
-        # Need it to open & parse
-        self.define_snippet_path = os.path.join(self.packages_path, '..',
-                                                self.define_snippet)
-
-        self.mappings = {}
         self.items = ['> Input path to module...'] + self.module_collection.ids
-        self.names = []
 
         self.capture()
 
@@ -79,26 +39,31 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
         First attempts to lookup property in the project settings.
         If it doesn't exist, fall back to this plugin's settings property.
         """
-        return self.view.settings().get(prop, self.settings.get(prop))
+        return self.view.settings().get(prop, settings.get(prop))
 
 
     def capture(self):
         # get cursor position or span of selection
-        original_region = self.view.sel()[0]
-        region = original_region
+        return_region = self.view.sel()[0]
+        region = return_region
 
         while True:
             # find the syntax scope of the selected region
-            scope_is_array = bool(self.view.score_selector(region.begin(),
-                                  'meta.brace.square'))
-            scope_is_args = bool(self.view.score_selector(region.begin(),
-                                 'meta.brace.round'))
-            if scope_is_array:
+            (beginning_bracket, end_bracket) = (
+                self.view.score_selector(region.begin(), 'meta.brace.square'),
+                self.view.score_selector(region.end() - 1, 'meta.brace.square')
+            )
+            if beginning_bracket and end_bracket:
                 # the selection is an array,
                 # pass it to an extract method and then stop looping
                 self.extract_from_array(region)
                 break
-            elif scope_is_args:
+
+            (beginning_paren, end_paren) = (
+                self.view.score_selector(region.begin(), 'meta.brace.round'),
+                self.view.score_selector(region.end() - 1, 'meta.brace.round')
+            )
+            if beginning_paren and end_paren:
                 # the selection is an arguments list,
                 # pass it to an extract method and then stop looping
                 self.extract_from_args(region)
@@ -118,13 +83,14 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
             region = new_region
 
         # clear regions and add back the original
-        # TODO: the cursor is still visually in the wrong place though
-        # self.view.sel().clear()
-        # self.view.sel().add(original_region)
-        # self.view.show(original_region)
+        # TODO: the cursor is still visually in the wrong place if no actions
+        # are taken though
+        self.view.sel().clear()
+        self.view.sel().add(return_region)
+        self.view.show(return_region)
 
 
-    def extract_from_array(self, region):
+    def extract_from_array(self, array_region):
         # TODO:
         # Look for `define(` to left of the array (should allow for an
         #   optional module name argument).
@@ -134,62 +100,80 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
         # Create dictionary of key-value pairs with arguments and array items
         # Quick response panel with added items above
 
-        buffer_string = self.view.substr(sublime.Region(0, self.view.size()))
-        point = region.begin() - 1
+        # expand the selection's scope
+        self.view.run_command('expand_selection', {'to': 'brackets'})
+        # get the new selected region
+        region = self.view.sel()[0]
+
+        if region == array_region:
+            # the selection is not enclosed in any more bracket-like characters
+            return
+
+        point = region.begin()
+        paren_score = self.view.score_selector(point, 'meta.brace.round')
+
+        if not paren_score:
+            # the selection not enclosed in parenthesis,
+            # this array is not an argument
+            return
+
+        # buffer_string = self.view.substr(sublime.Region(0, self.view.size()))
+        # point = new_region.begin() - 1
+
+        region = sublime.Region(point, point)
+
+        self.view.sel().clear()
+        self.view.sel().add(region)
 
         while True:
-            # if it is whitespace, loop
-            # if it is a comment, expand region to scope and loop
-            # if it is a comma, loop and look for a string
-            # move point backwards one character and loop
+            # if region begin point is whitespace, loop
+            # if region begin point is a comment, expand region and loop
 
-            scope_is_comment = bool(self.view.score_selector(point, 'comment'))
+            if region.contains(0):
+                # cursor is at the beginning of the text buffer
+                # and we need to stop looping
+                return False
+
+            # expand the selection's scope
+            self.view.run_command('move', {'by': 'subwords', 'forward': False})
+            region = self.view.sel()[0]
+            point = region.begin()
 
             char = self.view.substr(point)
             char_is_whitespace = bool(re.match(r'\s', char))
 
-            if char == u'\x00':
-                # char is null unicode character--we're at the beginning of
-                # the buffer and need to stop looping
-                break
-
             if char_is_whitespace:
-                point -= 1
                 continue
 
-            if scope_is_comment:
-                point = self.view.extract_scope(point).begin() - 1
+            comment_score = self.view.score_selector(point, 'comment')
+
+            if comment_score:
+                # cursor is in a comment, find the beginning of the comment
+                # and set the selected region to be that point
+                point = self.view.extract_scope(point).begin()
+                region = sublime.Region(point, point)
+
+                self.view.sel().clear()
+                self.view.sel().add(region)
                 continue
 
-            if self.view.score_selector(point, 'meta.delimiter.object.comma'):
-                # TODO: loop but make sure next meaningful iteration
-                # finds a string
-                print 'comma', point
-            # print self.view.scope_name(point)
+            break
 
-            # self.view.run_command('move', {'by': 'characters', 'forward': False})
-            # new_region = self.view.sel()[0]
+        self.view.run_command('move', {'by': 'subword_ends',
+                                       'forward': True,
+                                       'extend': True})
+        region = self.view.sel()[0]
+        selection = self.view.substr(region)
 
-            # print self.view.scope_name(point)
-            # print self.view.score_selector(self.view.sel()[0].begin(), 'comment')
-            # print self.view.score_selector(self.view.sel()[0].begin(), 'punctuation')
+        if selection != 'define':
+            return False
 
-            point -= 1
 
-        # expand the selection's scope
-        # self.view.run_command('expand_selection', {'to': 'brackets'})
-        # while True:
-        #     match = re.match('define')
+        self.window.show_quick_panel(self.items,
+                                     self.handle_path_panel_response,
+                                     sublime.MONOSPACE_FONT, 0)
 
-        # left_region = sublime.Region(0, region.begin())
-        # js = js_comment_regex.sub('', self.view.substr(left_region))
-        # js = re.sub(r'\s', '', js)
-        # print self.view.substr(right_region)
-        # if define_regex.search(js):
-
-        # self.window.show_quick_panel(self.items,
-        #                              self.handle_path_panel_response,
-        #                              sublime.MONOSPACE_FONT, 0)
+        return region
 
 
     def extract_from_args(self, region):
@@ -199,7 +183,12 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
         # look for `var = ` to left of `require`
         # Create key-value pair with variable name and argument string
         # show quick response panel with added items above
-        pass
+
+        # self.window.show_quick_panel(self.items,
+        #                              self.handle_path_panel_response,
+        #                              sublime.MONOSPACE_FONT, 0)
+
+        return region
 
 
     def handle_path_panel_response(self, index):
