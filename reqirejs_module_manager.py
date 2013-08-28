@@ -49,21 +49,21 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
 
         while True:
             # find the syntax scope of the selected region
-            (beginning_bracket, end_bracket) = (
+            (begin_bracket, end_bracket) = (
                 self.view.score_selector(region.begin(), 'meta.brace.square'),
                 self.view.score_selector(region.end() - 1, 'meta.brace.square')
             )
-            if beginning_bracket and end_bracket:
+            if begin_bracket and end_bracket:
                 # the selection is an array,
                 # pass it to an extract method and then stop looping
                 self.extract_from_array(region)
                 break
 
-            (beginning_paren, end_paren) = (
+            (begin_paren, end_paren) = (
                 self.view.score_selector(region.begin(), 'meta.brace.round'),
                 self.view.score_selector(region.end() - 1, 'meta.brace.round')
             )
-            if beginning_paren and end_paren:
+            if begin_paren and end_paren:
                 # the selection is an arguments list,
                 # pass it to an extract method and then stop looping
                 self.extract_from_args(region)
@@ -85,12 +85,12 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
         # clear regions and add back the original
         # TODO: the cursor is still visually in the wrong place if no actions
         # are taken though
-        self.view.sel().clear()
-        self.view.sel().add(return_region)
-        self.view.show(return_region)
+        # self.view.sel().clear()
+        # self.view.sel().add(return_region)
+        # self.view.show(return_region)
 
 
-    def extract_from_array(self, array_region):
+    def extract_from_array(self, region):
         # TODO:
         # Look for `define(` to left of the array (should allow for an
         #   optional module name argument).
@@ -100,80 +100,44 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
         # Create dictionary of key-value pairs with arguments and array items
         # Quick response panel with added items above
 
-        # expand the selection's scope
-        self.view.run_command('expand_selection', {'to': 'brackets'})
-        # get the new selected region
-        region = self.view.sel()[0]
-
-        if region == array_region:
-            # the selection is not enclosed in any more bracket-like characters
-            return
-
         point = region.begin()
-        paren_score = self.view.score_selector(point, 'meta.brace.round')
 
-        if not paren_score:
-            # the selection not enclosed in parenthesis,
-            # this array is not an argument
-            return
-
-        # buffer_string = self.view.substr(sublime.Region(0, self.view.size()))
-        # point = new_region.begin() - 1
-
-        region = sublime.Region(point, point)
-
-        self.view.sel().clear()
-        self.view.sel().add(region)
-
-        while True:
+        while point > 0:
             # if region begin point is whitespace, loop
             # if region begin point is a comment, expand region and loop
 
-            if region.contains(0):
-                # cursor is at the beginning of the text buffer
-                # and we need to stop looping
+            point -= 1
+
+            if self._char_is_whitespace(point):
+                continue
+
+            comment_region = self._scope_region(point, 'comment')
+            if comment_region:
+                point = comment_region.begin()
+                continue
+
+            if self.view.substr(point) != '(':
                 return False
+            else:
+                break
 
-            # expand the selection's scope
-            self.view.run_command('move', {'by': 'subwords', 'forward': False})
-            region = self.view.sel()[0]
-            point = region.begin()
+            # 'meta.brace.round'
+            # 'meta.delimiter.object.comma'
 
-            char = self.view.substr(point)
-            char_is_whitespace = bool(re.match(r'\s', char))
+        print point, self.view.substr(point)
+        # self.view.run_command('move', {'by': 'subword_ends',
+        #                                'forward': True,
+        #                                'extend': True})
+        # region = self.view.sel()[0]
+        # selection = self.view.substr(region)
 
-            if char_is_whitespace:
-                continue
-
-            comment_score = self.view.score_selector(point, 'comment')
-
-            if comment_score:
-                # cursor is in a comment, find the beginning of the comment
-                # and set the selected region to be that point
-                point = self.view.extract_scope(point).begin()
-                region = sublime.Region(point, point)
-
-                self.view.sel().clear()
-                self.view.sel().add(region)
-                continue
-
-            break
-
-        self.view.run_command('move', {'by': 'subword_ends',
-                                       'forward': True,
-                                       'extend': True})
-        region = self.view.sel()[0]
-        selection = self.view.substr(region)
-
-        if selection != 'define':
-            return False
+        # if selection != 'define':
+        #     return False
 
 
         self.window.show_quick_panel(self.items,
                                      self.handle_path_panel_response,
                                      sublime.MONOSPACE_FONT, 0)
-
-        return region
 
 
     def extract_from_args(self, region):
@@ -189,6 +153,16 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
         #                              sublime.MONOSPACE_FONT, 0)
 
         return region
+
+
+    def _char_is_whitespace(self, point):
+        if re.match(r'\s', self.view.substr(point)):
+            return True
+
+
+    def _scope_region(self, point, scope):
+        if self.view.score_selector(point, scope):
+            return self.view.extract_scope(point)
 
 
     def handle_path_panel_response(self, index):
