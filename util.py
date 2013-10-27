@@ -1,5 +1,30 @@
 import re
 
+# matches all strings enclosed in quotation marks
+string_pattern = r"""
+    (?P<quote>['"])                 # opening quote (single or double)
+    .*?                             # lazy repeat--allows multiple captures
+    (?<!\\)(?P=quote)               # unescaped closing quote (of same type)
+"""
+
+# matches //single line or */multiple line*/ javascript comments
+comment_regex = re.compile(r"""
+    (/\*(?:[^*]|\*[^/])*\*/)        # multi-line comment
+    |                               # or,
+    (?://(.*)$)                     # single-line comment
+""", re.VERBOSE + re.MULTILINE)
+
+# matches a define function call with optional module name argument
+# if it is at the end of the string.
+# should be run after stripping js comments and whitespace
+define_regex = re.compile(r'define\((%s,)?$' % (string_pattern), re.VERBOSE)
+
+# matches a define argument that is a function definition
+# if it is at the beginning of the string.
+# should be run after stripping js comments and whitespace
+function_regex = re.compile(r'^,function\(')
+
+
 # define_regex = re.compile(r"""
 #     ^define\s*\(\s*               # define invocation
 #     \[\s*                         # module arrary opening bracket

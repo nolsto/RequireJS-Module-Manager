@@ -4,9 +4,9 @@ from itertools import chain
 
 import sublime, sublime_plugin
 
-import util
 from module_collection import ModuleCollection
 from template import Template
+from util import comment_regex, define_regex, function_regex
 
 
 settings_filename = 'RequireJS Module Manager.sublime-settings'
@@ -56,7 +56,7 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
             if begin_bracket and end_bracket:
                 # the selection is an array,
                 # pass it to an extract method and then stop looping
-                self.extract_from_array(region)
+                deps = self.extract_from_array(region)
                 break
 
             (begin_paren, end_paren) = (
@@ -66,7 +66,7 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
             if begin_paren and end_paren:
                 # the selection is an arguments list,
                 # pass it to an extract method and then stop looping
-                self.extract_from_args(region)
+                deps = self.extract_from_args(region)
                 break
 
             # expand the selection's scope
@@ -81,50 +81,44 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
 
             # set the region to the new region with increased scope and loop
             region = new_region
-
-        # clear regions and add back the original
-        # TODO: the cursor is still visually in the wrong place if no actions
-        # are taken though
-        # self.view.sel().clear()
-        # self.view.sel().add(return_region)
-        # self.view.show(return_region)
-
+        deps.__repr__
+        try:
+            deps.__repr__
+        except Exception, e:
+            raise
+        else:
+            pass
+        finally:
+            # clear regions and add back the original
+            # TODO: the cursor is still visually in the wrong place if no actions
+            # are taken though
+            self.view.sel().clear()
+            self.view.sel().add(return_region)
+            self.view.show(return_region)
+            # pass
 
     def extract_from_array(self, region):
-        # TODO:
-        # Look for `define(` to left of the array (should allow for an
-        #   optional module name argument).
-        # Look for `), function(...)` to right of the array
-        # Parse strings in array and generate list
-        # Split arguments on commas and generate list
-        # Create dictionary of key-value pairs with arguments and array items
-        # Quick response panel with added items above
+        if not self.contains_define_array(region):
+            return
 
-        point = region.begin()
+    def contains_define_array(self, region):
+        string = self.view.substr(sublime.Region(0, region.begin()))
+        string = self._simplify_js_string(string)
 
-        while point > 0:
-            # if region begin point is whitespace, loop
-            # if region begin point is a comment, expand region and loop
+        if not define_regex.search(string):
+            return False
 
-            point -= 1
+        return True
 
-            if self._char_is_whitespace(point):
-                continue
+    def contains_define_function(self, region):
+        string = self.view.substr(sublime.Region(region.end(), self.view.size()))
+        string = self._simplify_js_string(string)
 
-            comment_region = self._scope_region(point, 'comment')
-            if comment_region:
-                point = comment_region.begin()
-                continue
+        if not function_regex.search(string):
+            return False
 
-            if self.view.substr(point) != '(':
-                return False
-            else:
-                break
+        return True
 
-            # 'meta.brace.round'
-            # 'meta.delimiter.object.comma'
-
-        print point, self.view.substr(point)
         # self.view.run_command('move', {'by': 'subword_ends',
         #                                'forward': True,
         #                                'extend': True})
@@ -135,9 +129,9 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
         #     return False
 
 
-        self.window.show_quick_panel(self.items,
-                                     self.handle_path_panel_response,
-                                     sublime.MONOSPACE_FONT, 0)
+        # self.window.show_quick_panel(self.items,
+        #                              self.handle_path_panel_response,
+        #                              sublime.MONOSPACE_FONT, 0)
 
 
     def extract_from_args(self, region):
@@ -153,6 +147,9 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
         #                              sublime.MONOSPACE_FONT, 0)
 
         return region
+
+    def _simplify_js_string(self, string):
+        return re.sub(r'\s', '', comment_regex.sub('', string))
 
 
     def _char_is_whitespace(self, point):
