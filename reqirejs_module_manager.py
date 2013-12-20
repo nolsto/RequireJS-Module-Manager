@@ -2,7 +2,8 @@ import os
 import re
 from itertools import chain
 
-import sublime, sublime_plugin
+from sublime import MONOSPACE_FONT, Region
+from sublime_plugin import WindowCommand
 
 from module_collection import ModuleCollection
 from template import Template
@@ -14,30 +15,33 @@ settings_filename = 'RequireJS Module Manager.sublime-settings'
 settings = sublime.load_settings(settings_filename)
 
 
-class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
+class AddRequirejsModuleDependencyCommand(WindowCommand):
 
     def run(self):
-        # Active view (area that contains the text buffer)
+        # active view (area that contains the text buffer)
         self.view = self.window.active_view()
 
-        # First folder in the project
-        self.folder = self.window.folders()[0]
+        try:
+            # first folder in the project
+            folder = self.window.folders()[0]
+        except Exception as e:
+            raise Exception('RequireJS Module Manager requires a project with at least one folder')
 
-        self.requirejs_config = self.get_setting('requirejs_config')
+        self.define_template = Template(self.get_setting('define_template'))
+        print self.define_template
 
-        self.module_collection = ModuleCollection(self.folder,
-                                                  self.requirejs_config)
+        self.module_collection = ModuleCollection(folder, self.get_setting('requirejs_config'))
 
-        self.items = ['> Input path to module...'] + self.module_collection.ids
+        self.items = ['> Input module path...'] + self.module_collection.ids
 
-        self.capture()
+        # self.capture()
 
 
     def get_setting(self, prop):
         """Load the property
 
         First attempts to lookup property in the project settings.
-        If it doesn't exist, fall back to this plugin's settings property.
+        If it doesn't exist, fall back to plugin's settings property.
         """
         return self.view.settings().get(prop, settings.get(prop))
 
@@ -54,19 +58,7 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
                 self.view.score_selector(region.end() - 1, 'meta.brace.square')
             )
             if begin_bracket and end_bracket:
-                # the selection is an array,
-                # pass it to an extract method and then stop looping
-                deps = self.extract_from_array(region)
-                break
-
-            (begin_paren, end_paren) = (
-                self.view.score_selector(region.begin(), 'meta.brace.round'),
-                self.view.score_selector(region.end() - 1, 'meta.brace.round')
-            )
-            if begin_paren and end_paren:
-                # the selection is an arguments list,
-                # pass it to an extract method and then stop looping
-                deps = self.extract_from_args(region)
+                # the selection is an array, stop looping
                 break
 
             # expand the selection's scope
@@ -81,9 +73,21 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
 
             # set the region to the new region with increased scope and loop
             region = new_region
-        deps.__repr__
+
+        string = self.view.substr(Region(0, region.begin()))
+        simple_string = self._simplify_js_string(string)
+        print define_regex.search(simple_string).group('name')
+
+        string = self.view.substr(Region(region.begin() + 1,
+                                                 region.end() - 1))
+        print self._simplify_js_string(string)
+
+        string = self.view.substr(Region(region.end(), self.view.size()))
+        simple_string = self._simplify_js_string(string)
+        print function_regex.search(simple_string).group('vars')
+
         try:
-            deps.__repr__
+            print region
         except Exception, e:
             raise
         else:
@@ -92,26 +96,24 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
             # clear regions and add back the original
             # TODO: the cursor is still visually in the wrong place if no actions
             # are taken though
-            self.view.sel().clear()
-            self.view.sel().add(return_region)
-            self.view.show(return_region)
-            # pass
+            # self.view.sel().clear()
+            # self.view.sel().add(return_region)
+            # self.view.show(return_region)
+            pass
 
-    def extract_from_array(self, region):
-        if not self.contains_define_array(region):
-            return
 
-    def contains_define_array(self, region):
-        string = self.view.substr(sublime.Region(0, region.begin()))
-        string = self._simplify_js_string(string)
+    def is_define_array(self, region):
+        string = self.view.substr(Region(0, region.begin()))
+        simple_string = self._simplify_js_string(string)
 
-        if not define_regex.search(string):
+        if not define_regex.search(simple_string):
             return False
 
         return True
 
+
     def contains_define_function(self, region):
-        string = self.view.substr(sublime.Region(region.end(), self.view.size()))
+        string = self.view.substr(Region(region.end(), self.view.size()))
         string = self._simplify_js_string(string)
 
         if not function_regex.search(string):
@@ -142,9 +144,9 @@ class AddRequirejsModuleDependencyCommand(sublime_plugin.WindowCommand):
         # Create key-value pair with variable name and argument string
         # show quick response panel with added items above
 
-        # self.window.show_quick_panel(self.items,
-        #                              self.handle_path_panel_response,
-        #                              sublime.MONOSPACE_FONT, 0)
+        self.window.show_quick_panel(self.items,
+                                     self.handle_path_panel_response,
+                                     sublime.MONOSPACE_FONT, 0)
 
         return region
 
