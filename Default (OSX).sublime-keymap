@@ -1,7 +1,4 @@
 [
-    {
-        "keys": ["ctrl+r"],
-        "__doc__": "Add a Javascript Module Dependency",
-        "command": "add_requirejs_module_dependency"
-    }
+  { "keys": ["ctrl+r"], "command": "add_requirejs_module_dependency", "__doc__": "Add a RequireJS AMD Dependency" },
+	{ "keys": ["shift+ctrl+r"], "command": "remove_requirejs_module_dependency", "__doc__": "Remove a RequireJS AMD Dependency" }
 ]

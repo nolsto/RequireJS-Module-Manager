@@ -12,13 +12,13 @@
         <array>
             <dict>
                 <key>name</key>
-                <string>MODULE_PATH_PLACEHOLDER</string>
+                <string>PATH_PLACEHOLDER</string>
                 <key>value</key>
                 <string>path/to/module</string>
             </dict>
             <dict>
                 <key>name</key>
-                <string>MODULE_NAME_PLACEHOLDER</string>
+                <string>VAR_PLACEHOLDER</string>
                 <key>value</key>
                 <string>module</string>
             </dict>

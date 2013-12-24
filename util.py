@@ -1,28 +1,72 @@
 import re
 
+
 # matches all strings enclosed in quotation marks
 string_pattern = r"""
     (?P<quote>['"])                 # opening quote (single or double)
-    .*?                             # lazy repeat--allows multiple captures
+    (?P<string>.+)?                 # lazy repeat--allows multiple captures
     (?<!\\)(?P=quote)               # unescaped closing quote (of same type)
 """
 
+define_pattern = r"""
+    [\s;]define\(                   # define invocation
+    (?P<name>{string_pattern},)?    # optional explicit module name
+    (?P<paths>{{paths}})            # path string that will be substituted
+    ,function                       # function definition
+    (?P<vars>\(.*\))                # function parameters
+    {{                              # function block begin
+    (?P<script>.+)?                 # everything in-between
+    }}\)                            # end function definition
+""".format(**locals())
+
+
 # matches //single line or */multiple line*/ javascript comments
-comment_regex = re.compile(r"""
-    (/\*(?:[^*]|\*[^/])*\*/)        # multi-line comment
-    |                               # or,
-    (?://(.*)$)                     # single-line comment
-""", re.VERBOSE + re.MULTILINE)
+comment_pattern = r"""
+    (/\*(?:[^*]|\*[^/])*\*/)|       # multi-line comment, or
+    (//.*$)                         # single-line comment
+"""
+comment_regex = re.compile(comment_pattern, re.VERBOSE + re.MULTILINE)
+
+
+nonstructural_pattern = r"""
+    (?:\s|(?:{cmt}))*?
+""".format(cmt=comment_pattern)
+
+
+pragma_pattern = r"""
+    ^//>>                           # comment and pragma start
+    (?P<type>include|exclude)       # include or exclude
+    (?P<action>Start|End)\s*?       # start or end
+    \(\s*?{string_pattern}\s*?      # pragma's key
+    (,.+?)?\);$                     # optional second parameter
+""".format(**locals())
+
+
+# path_regex = re.compile(r"""
+#     (?P<pre>.*)?                    # content that exists before path string
+#     (?P<paths>
+#     {str}                #
+#     ((?<=,){str})*?      #
+#     )
+#     (?P<post>.*)?                   # new line if it exists after path
+# """.format(str=string_pattern), re.VERBOSE + re.DOTALL)
+
+
 
 # matches a define function call with optional module name argument
 # if it is at the end of the string.
 # should be run after stripping js comments and whitespace
-define_regex = re.compile(r'define\((%s,)?$' % (string_pattern), re.VERBOSE)
+define_regex = re.compile(r'define\(((?P<name>%s),)?$' % (string_pattern), re.VERBOSE)
+
+# matches a require function call.
+# should be run after stripping js comments and whitespace
+require_regex = re.compile(r'require\($')
 
 # matches a define argument that is a function definition
 # if it is at the beginning of the string.
 # should be run after stripping js comments and whitespace
-function_regex = re.compile(r'^,function\(')
+function_regex = re.compile(r'^,function\((?P<vars>.*?)\)')
+
 
 
 # define_regex = re.compile(r"""
@@ -90,58 +134,11 @@ function_regex = re.compile(r'^,function\(')
 # """, re.VERBOSE|re.MULTILINE)
 
 
-snippet_content_regex = re.compile(r"""
-    <content>\s*                    # opening content tag
-    (?:<!\[CDATA\[)?(?:\n?)?        # optional CDATA tag
-    (?P<content>.+?)                # the template content itself
-    (?=(?:(?:\n?)?\]\]>)?\s*        # begin lookahead to optional CDATA close
-    <\/content>)                    # end lookahead on content tag close
-""", re.VERBOSE | re.DOTALL)
-
-snippet_unrelated_token_regex = re.compile(r"""
-    (\${\d:                         # beginning of the token and group
-    (?!                             # begin negative lookahead with:
-    (?:\$MODULE_PATH_PLACEHOLDER)|  # path token,
-    (?:\$MODULE_NAME_PLACEHOLDER)|  # or name token,
-    (?:\$TM_SELECTED_TEXT)          # or selected text token.
-    )})                             # end negative lookahead, token and group
-""", re.VERBOSE | re.MULTILINE)
-
-parse_snippet_regex = re.compile(r"""
-    ^(?P<frag1>.+?)
-
-    (?P<path_ind>(?<=[\n])\s\s*?)?  # whitespace if it exists before path
-    (?P<quote>['"])                 # opening quote: single or double quote
-    (?P<path>\${\d:                 # beginning of token and path group
-    \$MODULE_PATH_PLACEHOLDER       # module path environment variable name
-    })                              # end of token and group
-    (?<!\\)                         # prevent ending token on escaped quote
-    (?P=quote)                      # closing quote: same as captured type
-
-    (?P<frag2>.+?)
-
-    (?P<name_ind>(?<=[\n])\s\s*?)?  # whitespace if it exists before name
-    (?P<name>\${\d:                 # beginning of token and name group
-    \$MODULE_NAME_PLACEHOLDER       # module name environment variable name
-    })                              # end of token and group
-
-    (?P<frag3>.+?)
-
-    (?P<text_ind>(?<=[\n])\s\s*?)?  # whitespace if it exists before text
-    (?P<text>\${\d:                 # beginning of token and selectedtext group
-    \$TM_SELECTED_TEXT              # selected text environment variable
-    })                              # end of token and group
-
-    (?P<frag4>.+)$
-""", re.VERBOSE | re.DOTALL)
 
 
 def get_content_from_snippet(snippet):
     match = snippet_content_regex.search(snippet)
     return match.group('content')
-
-def remove_unrelated_tokens_in_snippet_content(string):
-    return snippet_unrelated_token_regex.sub('', string)
 
 def parse_snippet_content(string):
     match = parse_snippet_regex.search(string)

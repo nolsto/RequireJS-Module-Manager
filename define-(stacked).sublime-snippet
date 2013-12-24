@@ -1,14 +1,14 @@
 <snippet>
 	<content><![CDATA[
 define(${1:}[
-	'${2:$MODULE_PATH_PLACEHOLDER}'
+	'${2:$PATH_PLACEHOLDER}'
 ], function(
-	${3:$MODULE_NAME_PLACEHOLDER}
+	${3:$VAR_PLACEHOLDER}
 ) {
 	${0:$TM_SELECTED_TEXT}
 });
 ]]></content>
 	<tabTrigger>define</tabTrigger>
 	<scope>source.js</scope>
-    <description>define (AMD stacked items)</description>
+	<description>define (AMD stacked items)</description>
 </snippet>

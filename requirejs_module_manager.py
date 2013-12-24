@@ -1,8 +1,8 @@
 import os
 import re
-from itertools import chain
+from itertools import izip_longest
 
-from sublime import MONOSPACE_FONT, Region
+from sublime import load_settings, MONOSPACE_FONT, Region
 from sublime_plugin import WindowCommand
 
 from module_collection import ModuleCollection
@@ -12,7 +12,7 @@ from util import comment_regex, define_regex, function_regex
 
 settings_filename = 'RequireJS Module Manager.sublime-settings'
 # Load the settings file for this plugin
-settings = sublime.load_settings(settings_filename)
+settings = load_settings(settings_filename)
 
 
 class AddRequirejsModuleDependencyCommand(WindowCommand):
@@ -27,14 +27,13 @@ class AddRequirejsModuleDependencyCommand(WindowCommand):
         except Exception as e:
             raise Exception('RequireJS Module Manager requires a project with at least one folder')
 
-        self.define_template = Template(self.get_setting('define_template'))
-        print self.define_template
+        # self.define_template = Template(self.get_setting('define_template'))
 
         self.module_collection = ModuleCollection(folder, self.get_setting('requirejs_config'))
 
         self.items = ['> Input module path...'] + self.module_collection.ids
 
-        # self.capture()
+        self.capture()
 
 
     def get_setting(self, prop):
@@ -74,20 +73,50 @@ class AddRequirejsModuleDependencyCommand(WindowCommand):
             # set the region to the new region with increased scope and loop
             region = new_region
 
-        string = self.view.substr(Region(0, region.begin()))
-        simple_string = self._simplify_js_string(string)
-        print define_regex.search(simple_string).group('name')
+        paths = comment_regex.sub('', self.view.substr(region))
+        print paths
 
-        string = self.view.substr(Region(region.begin() + 1,
-                                                 region.end() - 1))
-        print self._simplify_js_string(string)
+        # string = self.view.substr(Region(0, region.begin()))
+        # simple_string = self._simplify_js_string(string)
+        # module_name = define_regex.search(simple_string).group('name')
 
-        string = self.view.substr(Region(region.end(), self.view.size()))
-        simple_string = self._simplify_js_string(string)
-        print function_regex.search(simple_string).group('vars')
+        # string = self.view.substr(Region(region.begin() + 1, region.end() - 1))
+        # deps_paths_string = self._simplify_js_string(string)
+        # deps_paths = deps_paths_string.split(',')
+
+        # string = self.view.substr(Region(region.end(), self.view.size()))
+        # simple_string = self._simplify_js_string(string)
+        # deps_vars_string = function_regex.search(simple_string).group('vars')
+        # deps_vars = deps_vars_string.split(',')
+
+        # deps_map = izip_longest(deps_paths, deps_vars)
+
+        # out = u''
+        # for (k, v) in deps_map:
+        #     string = u'{path_newline}{path_indent}{k},'.format(**dict(self.define_template.groups, **locals()))
+        #     out += string
+        # out = '[%s]' % out
+        # print out
+
+        # {'frag1': 'define(${1:}[',
+        #  'frag2': '\n], function(',
+        #  'frag3': '\n) {',
+        #  'frag4': '\n});',
+        #  'path': '${2:$PATH_PLACEHOLDER}',
+        #  'path_indent': '\t',
+        #  'path_newline': '\n',
+        #  'quote': "'",
+        #  'text': '${0:$TM_SELECTED_TEXT}',
+        #  'text_indent': '\t',
+        #  'text_newline': '\n',
+        #  'var': '${3:$VAR_PLACEHOLDER}',
+        #  'var_indent': '\t',
+        #  'var_newline': '\n'}
+
+
 
         try:
-            print region
+            pass
         except Exception, e:
             raise
         else:
@@ -225,3 +254,8 @@ class AddRequirejsModuleDependencyCommand(WindowCommand):
     #     #                       {'name': self.define_snippet})
     #     self.view.end_edit(edit)
 
+
+class RemoveRequirejsModuleDependencyCommand(WindowCommand):
+
+    def run(self):
+        pass

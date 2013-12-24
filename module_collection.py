@@ -25,9 +25,9 @@ class ModuleCollection:
                 config = json.load(f)
                 dirname = os.path.dirname(config_file)
             except IOError, e:
-                raise Exception('file does not exist')
+                raise Exception("'%s' config file does not exist" % (config_file))
             except ValueError, e:
-                raise Exception('content not in json format')
+                raise Exception('config content not in valid json format')
         else:
             dirname = folder
 

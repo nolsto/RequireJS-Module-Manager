@@ -15,7 +15,7 @@ class TemplatesTest(unittest.TestCase):
     def test_finds_content(self):
         snippet = """<snippet>
     <content><![CDATA[
-define(${1:}['${2:$MODULE_PATH_PLACEHOLDER}'], function(${3:$MODULE_NAME_PLACEHOLDER}) {
+define(${1:}['${2:$PATH_PLACEHOLDER}'], function(${3:$VAR_PLACEHOLDER}) {
     ${0:$TM_SELECTED_TEXT}
 });
 ]]></content>
@@ -24,7 +24,7 @@ define(${1:}['${2:$MODULE_PATH_PLACEHOLDER}'], function(${3:$MODULE_NAME_PLACEHO
     <description>define (AMD single line)</description>
 </snippet>"""
 
-        snippet_content = """define(${1:}['${2:$MODULE_PATH_PLACEHOLDER}'], function(${3:$MODULE_NAME_PLACEHOLDER}) {
+        snippet_content = """define(${1:}['${2:$PATH_PLACEHOLDER}'], function(${3:$VAR_PLACEHOLDER}) {
     ${0:$TM_SELECTED_TEXT}
 });"""
 
@@ -32,10 +32,10 @@ define(${1:}['${2:$MODULE_PATH_PLACEHOLDER}'], function(${3:$MODULE_NAME_PLACEHO
 
 
     def test_removes_unrelated_tokens(self):
-        snippet_content = """define(${1:}['${2:$MODULE_PATH_PLACEHOLDER}'], function(${3:$MODULE_NAME_PLACEHOLDER}) {
+        snippet_content = """define(${1:}['${2:$PATH_PLACEHOLDER}'], function(${3:$VAR_PLACEHOLDER}) {
     ${0:$TM_SELECTED_TEXT}
 });"""
-        content = """define(['${2:$MODULE_PATH_PLACEHOLDER}'], function(${3:$MODULE_NAME_PLACEHOLDER}) {
+        content = """define(['${2:$PATH_PLACEHOLDER}'], function(${3:$VAR_PLACEHOLDER}) {
     ${0:$TM_SELECTED_TEXT}
 });"""
 
@@ -43,16 +43,16 @@ define(${1:}['${2:$MODULE_PATH_PLACEHOLDER}'], function(${3:$MODULE_NAME_PLACEHO
 
 
     def test_replaces_tokens(self):
-        snippet_content = """define(['${2:$MODULE_PATH_PLACEHOLDER}'], function(${3:$MODULE_NAME_PLACEHOLDER}) {
+        snippet_content = """define(['${2:$PATH_PLACEHOLDER}'], function(${3:$VAR_PLACEHOLDER}) {
     ${0:$TM_SELECTED_TEXT}
 });"""
         content = {'frag1': 'define([',
                    'path_ind': None,
                    'quote': "'",
-                   'path': '${2:$MODULE_PATH_PLACEHOLDER}',
+                   'path': '${2:$PATH_PLACEHOLDER}',
                    'frag2': '], function(',
                    'name_ind': None,
-                   'name': '${3:$MODULE_NAME_PLACEHOLDER}',
+                   'name': '${3:$VAR_PLACEHOLDER}',
                    'frag3': ') {\n',
                    'text_ind': '    ',
                    'text': '${0:$TM_SELECTED_TEXT}',
@@ -62,16 +62,16 @@ define(${1:}['${2:$MODULE_PATH_PLACEHOLDER}'], function(${3:$MODULE_NAME_PLACEHO
 
 
     def test_replaces_tokens_2(self):
-        snippet_content = """define([ '${2:$MODULE_PATH_PLACEHOLDER}' ], function( ${3:$MODULE_NAME_PLACEHOLDER} ) {
+        snippet_content = """define([ '${2:$PATH_PLACEHOLDER}' ], function( ${3:$VAR_PLACEHOLDER} ) {
     ${0:$TM_SELECTED_TEXT}
 });"""
         content = {'frag1': 'define([ ',
                    'path_ind': None,
                    'quote': "'",
-                   'path': '${2:$MODULE_PATH_PLACEHOLDER}',
+                   'path': '${2:$PATH_PLACEHOLDER}',
                    'frag2': ' ], function( ',
                    'name_ind': None,
-                   'name': '${3:$MODULE_NAME_PLACEHOLDER}',
+                   'name': '${3:$VAR_PLACEHOLDER}',
                    'frag3': ' ) {\n',
                    'text_ind': '    ',
                    'text': '${0:$TM_SELECTED_TEXT}',
@@ -82,19 +82,19 @@ define(${1:}['${2:$MODULE_PATH_PLACEHOLDER}'], function(${3:$MODULE_NAME_PLACEHO
 
     def test_replaces_tokens_3(self):
         snippet_content = """define([
-    '${2:$MODULE_PATH_PLACEHOLDER}'
+    '${2:$PATH_PLACEHOLDER}'
 ], function(
-    ${3:$MODULE_NAME_PLACEHOLDER}
+    ${3:$VAR_PLACEHOLDER}
 ) {
     ${0:$TM_SELECTED_TEXT}
 });"""
         content = {'frag1': 'define([\n',
                    'path_ind': '    ',
                    'quote': "'",
-                   'path': '${2:$MODULE_PATH_PLACEHOLDER}',
+                   'path': '${2:$PATH_PLACEHOLDER}',
                    'frag2': '\n], function(\n',
                    'name_ind': '    ',
-                   'name': '${3:$MODULE_NAME_PLACEHOLDER}',
+                   'name': '${3:$VAR_PLACEHOLDER}',
                    'frag3': '\n) {\n',
                    'text_ind': '    ',
                    'text': '${0:$TM_SELECTED_TEXT}',
@@ -106,10 +106,10 @@ define(${1:}['${2:$MODULE_PATH_PLACEHOLDER}'], function(${3:$MODULE_NAME_PLACEHO
     def test_replaces_tokens_4(self):
         snippet_content = """define (
 [
-    '${2:$MODULE_PATH_PLACEHOLDER}'
+    '${2:$PATH_PLACEHOLDER}'
 ],
 function (
-    ${3:$MODULE_NAME_PLACEHOLDER}
+    ${3:$VAR_PLACEHOLDER}
 )
 {
     ${0:$TM_SELECTED_TEXT}
@@ -118,10 +118,10 @@ function (
         content = {'frag1': 'define (\n[\n',
                    'path_ind': '    ',
                    'quote': "'",
-                   'path': '${2:$MODULE_PATH_PLACEHOLDER}',
+                   'path': '${2:$PATH_PLACEHOLDER}',
                    'frag2': '\n],\nfunction (\n',
                    'name_ind': '    ',
-                   'name': '${3:$MODULE_NAME_PLACEHOLDER}',
+                   'name': '${3:$VAR_PLACEHOLDER}',
                    'frag3': '\n)\n{\n',
                    'text_ind': '    ',
                    'text': '${0:$TM_SELECTED_TEXT}',
@@ -133,10 +133,10 @@ function (
         fragments = {'frag1': 'define([',
                      'path_ind': None,
                      'quote': "'",
-                     'path': '${2:$MODULE_PATH_PLACEHOLDER}',
+                     'path': '${2:$PATH_PLACEHOLDER}',
                      'frag2': '], function(',
                      'name_ind': None,
-                     'name': '${3:$MODULE_NAME_PLACEHOLDER}',
+                     'name': '${3:$VAR_PLACEHOLDER}',
                      'frag3': ') {\n',
                      'text_ind': '    ',
                      'text': '${0:$TM_SELECTED_TEXT}',

@@ -1,11 +1,40 @@
 {
-  // Can be either an object or a path to the json file relative to the first
-  // folder in the project if one exists. eg:
+  // Can be either a RequireJS config object or a path to a json file
+  // containing RequireJS config options. eg:
   //"requirejs_config": "path/to/config.json"
+  // Relative to the first folder in the project.
 	"requirejs_config":
 	{
 		"appDir": ".",
 		"baseUrl": ".",
 		"paths": {}
-	}
+	},
+  // The path to the define snippet that the manager parses to determine the
+  // managed modules' formatting.
+  // Relative to the Sublime Text Packages folder.
+  "define_template": "RequireJS Module Manager/define-(stacked).sublime-snippet",
+  // If no dependency paths are listed, insert the added path string
+  // in either "single" or "double" quotes.
+  "quotes": "single",
+  // If the define template module dependency array and/or arguments
+  // are separated by new lines, insert commas following the new line.
+  /*
+   *  define([
+   *    'moduleA'
+   *  , 'moduleB'
+   *  ], function(
+   *    moduleA
+   *  , moduleB
+   *  )...
+   */
+  "comma-first-lists": true,
+  // Separate require dependencies with commas following the new line.
+  // Used with templates structrued as the CommonJS wrapper
+  /*
+   *  define(function (require) {
+   *    var moduleA = require('moduleA')
+   *      , moduleB = require('moduleB');
+   *    ...
+   */
+  "comma-first-vars": true
 }
