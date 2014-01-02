@@ -57,7 +57,10 @@ class AddRequirejsModuleDependencyCommand(WindowCommand):
                 self.view.score_selector(region.end() - 1, 'meta.brace.square')
             )
             if begin_bracket and end_bracket:
-                # the selection is an array, stop looping
+                # the selection is an array
+                while True:
+                    break
+
                 break
 
             # expand the selection's scope
@@ -73,8 +76,8 @@ class AddRequirejsModuleDependencyCommand(WindowCommand):
             # set the region to the new region with increased scope and loop
             region = new_region
 
-        paths = comment_regex.sub('', self.view.substr(region))
-        print paths
+        # paths = comment_regex.sub('', self.view.substr(region))
+        # print paths
 
         # string = self.view.substr(Region(0, region.begin()))
         # simple_string = self._simplify_js_string(string)
