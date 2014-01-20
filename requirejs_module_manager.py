@@ -11,6 +11,7 @@ from util import comment_regex, define_regex, function_regex
 
 
 settings_filename = 'RequireJS Module Manager.sublime-settings'
+
 # Load the settings file for this plugin
 settings = load_settings(settings_filename)
 
@@ -27,9 +28,10 @@ class AddRequirejsModuleDependencyCommand(WindowCommand):
         except Exception as e:
             raise Exception('RequireJS Module Manager requires a project with at least one folder')
 
-        # self.define_template = Template(self.get_setting('define_template'))
-
-        self.module_collection = ModuleCollection(folder, self.get_setting('requirejs_config'))
+        self.module_collection = ModuleCollection(
+            folder,
+            self.get_setting('requirejs_config')
+        )
 
         self.items = ['> Input module path...'] + self.module_collection.ids
 
@@ -47,20 +49,19 @@ class AddRequirejsModuleDependencyCommand(WindowCommand):
 
     def capture(self):
         # get cursor position or span of selection
-        return_region = self.view.sel()[0]
-        region = return_region
+        original_region = self.view.sel()[0]
+        region = original_region
 
         while True:
             # find the syntax scope of the selected region
+            (begin, end) = (region.begin(), region.end())
             (begin_bracket, end_bracket) = (
-                self.view.score_selector(region.begin(), 'meta.brace.square'),
-                self.view.score_selector(region.end() - 1, 'meta.brace.square')
+                self.view.substr(begin) == '[',
+                self.view.substr(end - 1) == ']'
             )
             if begin_bracket and end_bracket:
                 # the selection is an array
-                while True:
-                    break
-
+                region = Region(begin + 1, end - 1)
                 break
 
             # expand the selection's scope
@@ -71,10 +72,17 @@ class AddRequirejsModuleDependencyCommand(WindowCommand):
             if new_region == region:
                 # if the new selection is the same as the old one,
                 # there are no outer brackets and we need to stop looping
-                break
+                # clear regions and add back the original
+                # TODO: the cursor is still visually in the wrong place though
+                self.view.sel().clear()
+                self.view.sel().add(original_region)
+                self.view.show(original_region)
+                return False
 
             # set the region to the new region with increased scope and loop
             region = new_region
+
+        content = self.view.substr(region)
 
         # paths = comment_regex.sub('', self.view.substr(region))
         # print paths
@@ -129,8 +137,8 @@ class AddRequirejsModuleDependencyCommand(WindowCommand):
             # TODO: the cursor is still visually in the wrong place if no actions
             # are taken though
             # self.view.sel().clear()
-            # self.view.sel().add(return_region)
-            # self.view.show(return_region)
+            # self.view.sel().add(original_region)
+            # self.view.show(original_region)
             pass
 
 
