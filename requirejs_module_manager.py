@@ -1,41 +1,205 @@
+import json
 import os
 import re
+import sys
 from itertools import izip_longest
+from subprocess import PIPE, Popen
 
-from sublime import load_settings, MONOSPACE_FONT, Region
+import sublime
 from sublime_plugin import WindowCommand
 
+import utils
 from module_collection import ModuleCollection
 from template import Template
-from util import comment_regex, define_regex, function_regex
 
 
-settings_filename = 'RequireJS Module Manager.sublime-settings'
+# contants
+PLUGIN_FOLDER = os.path.dirname(os.path.realpath(__file__))
+PLUGIN_NAME = 'RequireJS Module Manager'
+SETTINGS_FILENAME = PLUGIN_NAME + '.sublime-settings'
 
-# Load the settings file for this plugin
-settings = load_settings(settings_filename)
+# globals
+settings = None
+windows = None
+
+
+# get id of window
+# create new window entry if id not present
+# if id present, remove event listener from window settings
+# add event listener to view settings
+# add view settings to window as settings
+
+
+def plugin_loaded():
+    global settings, windows
+
+    windows = {}
+    settings = sublime.load_settings(SETTINGS_FILENAME)
+    settings.add_on_change('rjsmm', update_settings)
+
+
+def update_settings():
+    global settings
+
+    # locate node binary file
+
+
+    node_command_setting = settings.get('node_command')
+    node_command = utils.which(node_command_setting)
+    if not node_command:
+        message = 'Node.js command or binary file cannot be found.'
+        print '%s: %s' % (PLUGIN_NAME, message)
+        return
+    node_command = os.path.realpath(node_command)
+
+    # locate r.js file
+    rjs_path_setting = settings.get('r.js_path')
+    rjs_path = utils.which(rjs_path_setting)
+    if not rjs_path:
+        if utils.is_accessible_file(rjs_path_setting):
+            rjs_path = rjs_path_setting
+        else:
+            rjs_path = os.path.join(PLUGIN_FOLDER, 'lib/r.js')
+    rjs_path = os.path.realpath(rjs_path)
+
+    # windows[sublime.active_window().id()] = {'node_command': node_command,
+    #                                          'rjs_path': rjs_path}
+
+
+def get_node_command(setting):
+    """Locate node binary file"""
+
+    global settings
+
+    setting = self.get_setting('node_command')
+    command = utils.which(setting)
+    if not command:
+        command = utils.which(os.path.join(folder, setting))
+        if not command:
+            message = 'Node.js command or binary file cannot be found.'
+            print message_fragment, message
+            return
+    return os.path.realpath(command)
+
+
+# def update_node_command():
+#     """Locate node binary file"""
+
+#     node_command_setting = self.get_setting('node_command')
+#     node_command = utils.which(node_command_setting)
+#     if not node_command:
+#         node_command = utils.which(os.path.join(folder, node_command_setting))
+#         if not node_command:
+#             message = 'Node.js command or binary file cannot be found.'
+#             print message_fragment, message
+#             return
+#     node_command = os.path.realpath(node_command)
+
+
+# def update_rjs_path():
+#     """Locate r.js file"""
+
+#     rjs_path_setting = self.get_setting('r.js_path')
+#     rjs_path = utils.which(rjs_path_setting)
+#     if not rjs_path:
+#         if utils.is_accessible_file(rjs_path_setting):
+#             rjs_path = rjs_path_setting
+#         else:
+#             rjs_path = os.path.join(folder, rjs_path_setting)
+#             if not utils.is_accessible_file(rjs_path):
+#                 message = 'r.js command or file path cannot be found.'
+#                 print message_fragment, message
+#                 return
+#     rjs_path = os.path.realpath(rjs_path)
+
+
+# def update_rjs_config():
+#     pass
+
+
+def say_hi():
+    print 'hi'
 
 
 class AddRequirejsModuleDependencyCommand(WindowCommand):
 
     def run(self):
-        # active view (area that contains the text buffer)
-        self.view = self.window.active_view()
+        global windows
 
-        try:
-            # first folder in the project
-            folder = self.window.folders()[0]
-        except Exception as e:
-            raise Exception('RequireJS Module Manager requires a project with at least one folder')
+        window = self.window
+        window_id = window.id()
 
-        self.module_collection = ModuleCollection(
-            folder,
-            self.get_setting('requirejs_config')
-        )
+        if not window_id in windows:
+            windows[window_id] = window
+        else:
+            for view in windows[window_id].views():
+                view.settings().clear_on_change('rjsmm')
 
-        self.items = ['> Input module path...'] + self.module_collection.ids
+        window.active_view().settings().add_on_change('rjsmm', self.say_hi)
 
-        self.capture()
+
+        # def update_settings():
+        #     print 'Update settings', last_active_view.id()
+
+        # view = self.window.active_view()
+        # settings = view.settings()
+
+        # if last_active_view:
+        #     last_active_view.settings().clear_on_change('poo')
+        # else:
+        #     last_active_view = view
+        #     update_settings()
+
+        # settings.add_on_change('poo', update_settings)
+
+        # last_active_view = view
+
+        # # find first folder in the project
+        # try:
+        #     folder = self.window.folders()[0]
+        # except IndexError as e:
+        #     message = 'Command must be run in a project with at least one folder.'
+        #     print message_fragment + message
+        #     return
+
+        # # determine requirejs config object
+        # rjs_config_setting = self.get_setting('requirejs_config')
+        # if type(rjs_config_setting) is dict:
+        #     rjs_config = rjs_config_setting
+        # elif type(rjs_config_setting) is unicode:
+        #     if utils.is_accessible_file(rjs_config_setting):
+        #         rjs_config_fpath = rjs_config_setting
+        #     else:
+        #         rjs_config_fpath = os.path.join(folder, rjs_config_setting)
+        #         if not utils.is_accessible_file(rjs_config_fpath):
+        #             message = 'RequireJS config file path %s cannot be found'
+        #             print message_fragment, message % rjs_config_setting
+        #             return
+
+        #     script = os.path.join(PLUGIN_FOLDER, 'scripts/parse_requirejs_config.js')
+        #     cmd = [node, script, rjs, rjs_config_fpath]
+        #     try:
+        #         proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+        #         stdout, stderr = proc.communicate()
+        #         if stderr:
+        #             message = 'no requirejs config object found in %s'
+        #             print message_fragment, message % rjs_config_setting
+        #             return
+        #         rjs_config = json.loads(stdout)
+        #     except Exception as e:
+        #         raise
+        # else:
+        #     message = 'RequireJS config setting must be either a valid JSON object or file path'
+        #     print message_fragment, message
+
+
+        # # create module collection
+        # self.module_collection = ModuleCollection(folder, rjs_config)
+        # self.items = ['> Input module path...'] + self.module_collection.ids
+        # print self.items
+
+    def say_hi(self):
+        print 'hi from %s, %s' % (self.window.id(), self.window.active_view())
 
 
     def get_setting(self, prop):
@@ -47,161 +211,9 @@ class AddRequirejsModuleDependencyCommand(WindowCommand):
         return self.view.settings().get(prop, settings.get(prop))
 
 
-    def capture(self):
-        # get cursor position or span of selection
-        original_region = self.view.sel()[0]
-        region = original_region
-
-        while True:
-            # find the syntax scope of the selected region
-            (begin, end) = (region.begin(), region.end())
-            (begin_bracket, end_bracket) = (
-                self.view.substr(begin) == '[',
-                self.view.substr(end - 1) == ']'
-            )
-            if begin_bracket and end_bracket:
-                # the selection is an array
-                region = Region(begin + 1, end - 1)
-                break
-
-            # expand the selection's scope
-            self.view.run_command('expand_selection', {'to': 'brackets'})
-            # get the new selected region
-            new_region = self.view.sel()[0]
-
-            if new_region == region:
-                # if the new selection is the same as the old one,
-                # there are no outer brackets and we need to stop looping
-                # clear regions and add back the original
-                # TODO: the cursor is still visually in the wrong place though
-                self.view.sel().clear()
-                self.view.sel().add(original_region)
-                self.view.show(original_region)
-                return False
-
-            # set the region to the new region with increased scope and loop
-            region = new_region
-
-        content = self.view.substr(region)
-
-        # paths = comment_regex.sub('', self.view.substr(region))
-        # print paths
-
-        # string = self.view.substr(Region(0, region.begin()))
-        # simple_string = self._simplify_js_string(string)
-        # module_name = define_regex.search(simple_string).group('name')
-
-        # string = self.view.substr(Region(region.begin() + 1, region.end() - 1))
-        # deps_paths_string = self._simplify_js_string(string)
-        # deps_paths = deps_paths_string.split(',')
-
-        # string = self.view.substr(Region(region.end(), self.view.size()))
-        # simple_string = self._simplify_js_string(string)
-        # deps_vars_string = function_regex.search(simple_string).group('vars')
-        # deps_vars = deps_vars_string.split(',')
-
-        # deps_map = izip_longest(deps_paths, deps_vars)
-
-        # out = u''
-        # for (k, v) in deps_map:
-        #     string = u'{path_newline}{path_indent}{k},'.format(**dict(self.define_template.groups, **locals()))
-        #     out += string
-        # out = '[%s]' % out
-        # print out
-
-        # {'frag1': 'define(${1:}[',
-        #  'frag2': '\n], function(',
-        #  'frag3': '\n) {',
-        #  'frag4': '\n});',
-        #  'path': '${2:$PATH_PLACEHOLDER}',
-        #  'path_indent': '\t',
-        #  'path_newline': '\n',
-        #  'quote': "'",
-        #  'text': '${0:$TM_SELECTED_TEXT}',
-        #  'text_indent': '\t',
-        #  'text_newline': '\n',
-        #  'var': '${3:$VAR_PLACEHOLDER}',
-        #  'var_indent': '\t',
-        #  'var_newline': '\n'}
-
-
-
-        try:
-            pass
-        except Exception, e:
-            raise
-        else:
-            pass
-        finally:
-            # clear regions and add back the original
-            # TODO: the cursor is still visually in the wrong place if no actions
-            # are taken though
-            # self.view.sel().clear()
-            # self.view.sel().add(original_region)
-            # self.view.show(original_region)
-            pass
-
-
-    def is_define_array(self, region):
-        string = self.view.substr(Region(0, region.begin()))
-        simple_string = self._simplify_js_string(string)
-
-        if not define_regex.search(simple_string):
-            return False
-
-        return True
-
-
-    def contains_define_function(self, region):
-        string = self.view.substr(Region(region.end(), self.view.size()))
-        string = self._simplify_js_string(string)
-
-        if not function_regex.search(string):
-            return False
-
-        return True
-
-        # self.view.run_command('move', {'by': 'subword_ends',
-        #                                'forward': True,
-        #                                'extend': True})
-        # region = self.view.sel()[0]
-        # selection = self.view.substr(region)
-
-        # if selection != 'define':
-        #     return False
-
-
-        # self.window.show_quick_panel(self.items,
-        #                              self.handle_path_panel_response,
-        #                              sublime.MONOSPACE_FONT, 0)
-
-
-    def extract_from_args(self, region):
-        # TODO:
-        # Look for `require` to left of the args
-        # parse arguments and exit if the returned is not a single string
-        # look for `var = ` to left of `require`
-        # Create key-value pair with variable name and argument string
-        # show quick response panel with added items above
-
-        self.window.show_quick_panel(self.items,
-                                     self.handle_path_panel_response,
-                                     sublime.MONOSPACE_FONT, 0)
-
-        return region
-
-    def _simplify_js_string(self, string):
-        return re.sub(r'\s', '', comment_regex.sub('', string))
-
-
-    def _char_is_whitespace(self, point):
-        if re.match(r'\s', self.view.substr(point)):
-            return True
-
-
-    def _scope_region(self, point, scope):
-        if self.view.score_selector(point, scope):
-            return self.view.extract_scope(point)
+    # self.window.show_quick_panel(self.items,
+    #                              self.handle_path_panel_response,
+    #                              sublime.MONOSPACE_FONT, 0)
 
 
     def handle_path_panel_response(self, index):
@@ -226,7 +238,7 @@ class AddRequirejsModuleDependencyCommand(WindowCommand):
                                          None, None)
             return
         # module_id = self.module_collection.ids[index - 1]
-        # (module_varname, ext) = os.path.splitext(os.path.basename(module_id))
+        # (module_varname, ext) = path.splitext(path.basename(module_id))
         # self.handle_id_or_resource_input(module_id, module_varname)
         # search = 'poo'
         # edit = self.view.begin_edit()
@@ -270,3 +282,8 @@ class RemoveRequirejsModuleDependencyCommand(WindowCommand):
 
     def run(self):
         pass
+
+
+if sys.version_info < (3,):
+    plugin_loaded()
+
