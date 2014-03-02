@@ -1,40 +1,50 @@
 {
-  // Can be either a RequireJS config object or a path to a json file
-  // containing RequireJS config options. eg:
-  //"requirejs_config": "path/to/config.json"
-  // Relative to the first folder in the project.
-	"requirejs_config":
-	{
-		"appDir": ".",
-		"baseUrl": ".",
-		"paths": {}
-	},
-  // The path to the define snippet that the manager parses to determine the
-  // managed modules' formatting.
-  // Relative to the Sublime Text Packages folder.
-  "define_template": "RequireJS Module Manager/define-(stacked).sublime-snippet",
+  // Change this to the explicit path of the node.js binary file if it is
+  // located in a directory not seen by Sublime Text's PATH variable. Example:
+  //"node_command": "/usr/local/bin/node",
+  "node_command": "node",
+
+  // A version of r.js is included with the plugin and used by default,
+  // but you can specify your own to use. Can either be an absolute path
+  // or a path relative to the first folder in your project. Example:
+  // "r.js_path": "/usr/local/share/npm/bin/r.js",
+
+  // Can be either a RequireJS config object or a path to a js file containing
+  // a requirejs.config relative to the first folder in the project. Example:
+  //"requirejs_config": "path/to/config.js"
+  "requirejs_config": {
+    "appDir": ".",
+    "baseUrl": ".",
+    "paths": {}
+  },
+
   // If no dependency paths are listed, insert the added path string
-  // in either "single" or "double" quotes.
-  "quotes": "single",
+  // in either 'single' or "double" quotes.
+  "quote_style": "single",
+
   // If the define template module dependency array and/or arguments
   // are separated by new lines, insert commas following the new line.
-  /*
-   *  define([
-   *    'moduleA'
-   *  , 'moduleB'
-   *  ], function(
-   *    moduleA
-   *  , moduleB
-   *  )...
-   */
-  "comma-first-lists": true,
+  //
+  //  define([
+  //    'moduleA'
+  //  , 'moduleB'
+  //  ], function(
+  //    moduleA
+  //  , moduleB
+  //  ) {
+  //    ...
+  //  });
+  //
+  "leading_comma_lists": true,
+
   // Separate require dependencies with commas following the new line.
-  // Used with templates structrued as the CommonJS wrapper
-  /*
-   *  define(function (require) {
-   *    var moduleA = require('moduleA')
-   *      , moduleB = require('moduleB');
-   *    ...
-   */
-  "comma-first-vars": true
+  // Used with modules structrued as CommonJS
+  //
+  //  define(function (require) {
+  //    var moduleA = require('moduleA')
+  //      , moduleB = require('moduleB');
+  //    ...
+  //  });
+  //
+  "leading_comma_vars": true
 }

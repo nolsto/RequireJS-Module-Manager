@@ -20,186 +20,131 @@ SETTINGS_FILENAME = PLUGIN_NAME + '.sublime-settings'
 
 # globals
 settings = None
-windows = None
-
-
-# get id of window
-# create new window entry if id not present
-# if id present, remove event listener from window settings
-# add event listener to view settings
-# add view settings to window as settings
 
 
 def plugin_loaded():
-    global settings, windows
-
-    windows = {}
+    global settings
     settings = sublime.load_settings(SETTINGS_FILENAME)
-    settings.add_on_change('rjsmm', update_settings)
-
-
-def update_settings():
-    global settings
-
-    # locate node binary file
-
-
-    node_command_setting = settings.get('node_command')
-    node_command = utils.which(node_command_setting)
-    if not node_command:
-        message = 'Node.js command or binary file cannot be found.'
-        print '%s: %s' % (PLUGIN_NAME, message)
-        return
-    node_command = os.path.realpath(node_command)
-
-    # locate r.js file
-    rjs_path_setting = settings.get('r.js_path')
-    rjs_path = utils.which(rjs_path_setting)
-    if not rjs_path:
-        if utils.is_accessible_file(rjs_path_setting):
-            rjs_path = rjs_path_setting
-        else:
-            rjs_path = os.path.join(PLUGIN_FOLDER, 'lib/r.js')
-    rjs_path = os.path.realpath(rjs_path)
-
-    # windows[sublime.active_window().id()] = {'node_command': node_command,
-    #                                          'rjs_path': rjs_path}
-
-
-def get_node_command(setting):
-    """Locate node binary file"""
-
-    global settings
-
-    setting = self.get_setting('node_command')
-    command = utils.which(setting)
-    if not command:
-        command = utils.which(os.path.join(folder, setting))
-        if not command:
-            message = 'Node.js command or binary file cannot be found.'
-            print message_fragment, message
-            return
-    return os.path.realpath(command)
-
-
-# def update_node_command():
-#     """Locate node binary file"""
-
-#     node_command_setting = self.get_setting('node_command')
-#     node_command = utils.which(node_command_setting)
-#     if not node_command:
-#         node_command = utils.which(os.path.join(folder, node_command_setting))
-#         if not node_command:
-#             message = 'Node.js command or binary file cannot be found.'
-#             print message_fragment, message
-#             return
-#     node_command = os.path.realpath(node_command)
-
-
-# def update_rjs_path():
-#     """Locate r.js file"""
-
-#     rjs_path_setting = self.get_setting('r.js_path')
-#     rjs_path = utils.which(rjs_path_setting)
-#     if not rjs_path:
-#         if utils.is_accessible_file(rjs_path_setting):
-#             rjs_path = rjs_path_setting
-#         else:
-#             rjs_path = os.path.join(folder, rjs_path_setting)
-#             if not utils.is_accessible_file(rjs_path):
-#                 message = 'r.js command or file path cannot be found.'
-#                 print message_fragment, message
-#                 return
-#     rjs_path = os.path.realpath(rjs_path)
-
-
-# def update_rjs_config():
-#     pass
-
-
-def say_hi():
-    print 'hi'
 
 
 class AddRequirejsModuleDependencyCommand(WindowCommand):
 
     def run(self):
-        global windows
 
-        window = self.window
-        window_id = window.id()
+        # find first folder in the project
+        try:
+            self.folder = self.window.folders()[0]
+        except IndexError as e:
+            message = 'Command must be run in a project with at least one folder.'
+            print '%s: %s' % (PLUGIN_NAME, message)
+            return
 
-        if not window_id in windows:
-            windows[window_id] = window
+        for view in self.window.views():
+            view.settings().clear_on_change('rjsmm')
+
+        self.view = self.window.active_view()
+        self.view.settings().add_on_change('rjsmm', self.update_settings)
+
+        try:
+            self.node_command
+        except AttributeError, e:
+            self.update_node_command()
+
+        try:
+            self.rjs_path
+        except AttributeError, e:
+            self.update_rjs_path()
+
+        try:
+            self.rjs_config
+        except AttributeError, e:
+            self.update_rjs_config()
+
+        # create module collection
+        self.module_collection = ModuleCollection(self.folder, self.rjs_config)
+        self.items = ['> Input module path...'] + self.module_collection.ids
+
+        self.window.show_quick_panel(self.items,
+                                     self.handle_path_panel_response,
+                                     sublime.MONOSPACE_FONT, 0)
+
+
+    def update_settings(self):
+        """Update all project-specific settings"""
+
+        self.update_node_command()
+        self.update_rjs_path()
+        self.update_rjs_config()
+
+
+    def update_node_command(self):
+        """Locate node binary file"""
+
+        setting = self.get_setting('node_command')
+        command = utils.which(setting)
+        if not command:
+            command = utils.which(os.path.join(self.folder, setting))
+            if not command:
+                message = 'Node.js command or binary file cannot be found.'
+                print '%s: %s' % (PLUGIN_NAME, message)
+                return
+
+        self.node_command = os.path.realpath(command)
+
+
+    def update_rjs_path(self):
+        """Locate r.js file"""
+
+        setting = self.get_setting('r.js_path')
+        if not setting:
+            path = os.path.join(PLUGIN_FOLDER, 'lib/r.js')
         else:
-            for view in windows[window_id].views():
-                view.settings().clear_on_change('rjsmm')
+            path = utils.which(setting)
+            if not path:
+                if utils.is_accessible_file(setting):
+                    path = setting
+                else:
+                    path = os.path.join(self.folder, setting)
+                    if not utils.is_accessible_file(path):
+                        message = 'r.js command or file path cannot be found.'
+                        print '%s: %s' % (PLUGIN_NAME, message)
+                        return
 
-        window.active_view().settings().add_on_change('rjsmm', self.say_hi)
-
-
-        # def update_settings():
-        #     print 'Update settings', last_active_view.id()
-
-        # view = self.window.active_view()
-        # settings = view.settings()
-
-        # if last_active_view:
-        #     last_active_view.settings().clear_on_change('poo')
-        # else:
-        #     last_active_view = view
-        #     update_settings()
-
-        # settings.add_on_change('poo', update_settings)
-
-        # last_active_view = view
-
-        # # find first folder in the project
-        # try:
-        #     folder = self.window.folders()[0]
-        # except IndexError as e:
-        #     message = 'Command must be run in a project with at least one folder.'
-        #     print message_fragment + message
-        #     return
-
-        # # determine requirejs config object
-        # rjs_config_setting = self.get_setting('requirejs_config')
-        # if type(rjs_config_setting) is dict:
-        #     rjs_config = rjs_config_setting
-        # elif type(rjs_config_setting) is unicode:
-        #     if utils.is_accessible_file(rjs_config_setting):
-        #         rjs_config_fpath = rjs_config_setting
-        #     else:
-        #         rjs_config_fpath = os.path.join(folder, rjs_config_setting)
-        #         if not utils.is_accessible_file(rjs_config_fpath):
-        #             message = 'RequireJS config file path %s cannot be found'
-        #             print message_fragment, message % rjs_config_setting
-        #             return
-
-        #     script = os.path.join(PLUGIN_FOLDER, 'scripts/parse_requirejs_config.js')
-        #     cmd = [node, script, rjs, rjs_config_fpath]
-        #     try:
-        #         proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-        #         stdout, stderr = proc.communicate()
-        #         if stderr:
-        #             message = 'no requirejs config object found in %s'
-        #             print message_fragment, message % rjs_config_setting
-        #             return
-        #         rjs_config = json.loads(stdout)
-        #     except Exception as e:
-        #         raise
-        # else:
-        #     message = 'RequireJS config setting must be either a valid JSON object or file path'
-        #     print message_fragment, message
+        self.rjs_path = os.path.realpath(path)
 
 
-        # # create module collection
-        # self.module_collection = ModuleCollection(folder, rjs_config)
-        # self.items = ['> Input module path...'] + self.module_collection.ids
-        # print self.items
+    def update_rjs_config(self):
+        """Determine requirejs config object"""
 
-    def say_hi(self):
-        print 'hi from %s, %s' % (self.window.id(), self.window.active_view())
+        setting = self.get_setting('requirejs_config')
+        if type(setting) is dict:
+            config = setting
+        elif type(setting) is unicode:
+            if utils.is_accessible_file(setting):
+                fpath = setting
+            else:
+                fpath = os.path.join(self.folder, setting)
+                if not utils.is_accessible_file(fpath):
+                    message = 'RequireJS config file path %s cannot be found' % setting
+                    print '%s: %s' % (PLUGIN_NAME, message)
+                    return
+            script = os.path.join(PLUGIN_FOLDER, 'scripts/parse_requirejs_config.js')
+            cmd = [self.node_command, script, self.rjs_path, fpath]
+            try:
+                proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+                stdout, stderr = proc.communicate()
+                if stderr:
+                    message = 'no requirejs config object found in %s' % setting
+                    print '%s: %s' % (PLUGIN_NAME, message)
+                    return
+                config = json.loads(stdout)
+            except Exception as e:
+                raise
+        else:
+            message = 'RequireJS config setting must be either a valid JSON object or file path'
+            print '%s: %s' % (PLUGIN_NAME, message)
+
+        self.rjs_config = config
 
 
     def get_setting(self, prop):
@@ -208,12 +153,9 @@ class AddRequirejsModuleDependencyCommand(WindowCommand):
         First attempts to lookup property in the project settings.
         If it doesn't exist, fall back to plugin's settings property.
         """
+
+        global settings
         return self.view.settings().get(prop, settings.get(prop))
-
-
-    # self.window.show_quick_panel(self.items,
-    #                              self.handle_path_panel_response,
-    #                              sublime.MONOSPACE_FONT, 0)
 
 
     def handle_path_panel_response(self, index):

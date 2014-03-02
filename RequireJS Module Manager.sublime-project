@@ -2,12 +2,8 @@
 	"folders":
 	[
 		{
-			"path": "~/Projects/RequireJS Module Manager"
+			"path": ".",
+			"file_exclude_patterns": ["*.sublime-workspace"]
 		}
-	],
-	"settings":
-	{
-		"requirejs_config": "tests/cases/tools/build.json"//,
-		// "define_template": "RequireJS Module Manager/define-(single-line).sublime-snippet"
-	}
+	]
 }

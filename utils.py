@@ -1,37 +1,26 @@
+import os
 import re
 
 
 # matches all strings enclosed in quotation marks
-string_pattern = r"""
-    (?P<quote>['"])                 # opening quote (single or double)
-    (?P<string>.+)?                 # lazy repeat--allows multiple captures
-    (?<!\\)(?P=quote)               # unescaped closing quote (of same type)
-"""
+# string_pattern = r"""
+#     (?P<quote>['"])                 # opening quote (single or double)
+#     (?P<string>.+)?                 # lazy repeat--allows multiple captures
+#     (?<!\\)(?P=quote)               # unescaped closing quote (of same type)
+# """
+string_pattern = r"""(?P<quote>['"])(?P<string>.+)?(?<!\\)(?P=quote)"""
 
-define_pattern = r"""
-    [\s;]define\(                   # define invocation
-    (?P<name>{string_pattern},)?    # optional explicit module name
-    (?P<paths>{{paths}})            # path string that will be substituted
-    ,function                       # function definition
-    (?P<vars>\(.*\))                # function parameters
-    {{                              # function block begin
-    (?P<script>.+)?                 # everything in-between
-    }}\)                            # end function definition
+multiline_comment_pattern = r'/\*(?:[^*]|\*[^/])*\*/'
+
+singleline_comment_pattern = r'//.*$'
+
+# matches //single-line or */multiple-line*/ javascript comments
+comment_pattern = r'({multiline_comment_pattern})|({singleline_comment_pattern})'.format(**locals())
+# comment_regex = re.compile(comment_pattern, re.VERBOSE + re.MULTILINE)
+
+noninterpreted_pattern = r"""
+    (?:\s|(?:{comment_pattern}))
 """.format(**locals())
-
-
-# matches //single line or */multiple line*/ javascript comments
-comment_pattern = r"""
-    (/\*(?:[^*]|\*[^/])*\*/)|       # multi-line comment, or
-    (//.*$)                         # single-line comment
-"""
-comment_regex = re.compile(comment_pattern, re.VERBOSE + re.MULTILINE)
-
-
-nonstructural_pattern = r"""
-    (?:\s|(?:{cmt}))*?
-""".format(cmt=comment_pattern)
-
 
 pragma_pattern = r"""
     ^//>>                           # comment and pragma start
@@ -41,33 +30,12 @@ pragma_pattern = r"""
     (,.+?)?\);$                     # optional second parameter
 """.format(**locals())
 
+define_pattern = r'\bdefine(\s|{comment_pattern})*\('.format(**locals())
+# define_regex = re.compile(define_pattern, re.MULTILINE)
 
-# path_regex = re.compile(r"""
-#     (?P<pre>.*)?                    # content that exists before path string
-#     (?P<paths>
-#     {str}                #
-#     ((?<=,){str})*?      #
-#     )
-#     (?P<post>.*)?                   # new line if it exists after path
-# """.format(str=string_pattern), re.VERBOSE + re.DOTALL)
+array_pattern = r'\[(\s|{comment_pattern})*.*?\]'.format(**locals())
 
-
-
-# matches a define function call with optional module name argument
-# if it is at the end of the string.
-# should be run after stripping js comments and whitespace
-define_regex = re.compile(r'define\(((?P<name>%s),)?$' % (string_pattern), re.VERBOSE)
-
-# matches a require function call.
-# should be run after stripping js comments and whitespace
-require_regex = re.compile(r'require\($')
-
-# matches a define argument that is a function definition
-# if it is at the beginning of the string.
-# should be run after stripping js comments and whitespace
-function_regex = re.compile(r'^,function\((?P<vars>.*?)\)')
-
-
+function_pattern = r'(?:\s|{comment_pattern})*?function\s*\('.format(**locals())
 
 # define_regex = re.compile(r"""
 #     ^define\s*\(\s*               # define invocation
@@ -113,7 +81,7 @@ function_regex = re.compile(r'^,function\((?P<vars>.*?)\)')
 # """, re.VERBOSE)
 
 # parse_define_regex = re.compile(r"""
-#     ^[^\S\n]*                     # beginning of line + whitespace
+#     ^{noninterpreted_pattern}     # beginning of line + whitespace
 #     define\s*\(\s*                # define invocation
 #     \[\s*                         # module arrary opening bracket
 #     (?P<mods>((?P<quote>['"])     # the captured opening quote: ' or "
@@ -127,19 +95,29 @@ function_regex = re.compile(r'^,function\((?P<vars>.*?)\)')
 #     \s*\)\s*{\s*                  # function block begin
 #     (?P<script>.+)?               # everything in-between
 #     \s*}\s*\)                     # end function definition
-# """, re.MULTILINE | re.VERBOSE)
+# """.format(**locals()), re.MULTILINE | re.VERBOSE)
 
 # define_mods_regex = re.compile(r"""
 
 # """, re.VERBOSE|re.MULTILINE)
 
 
+def is_accessible_file(fpath, mode=os.R_OK):
+    return os.path.isfile(fpath) and os.access(fpath, mode)
 
 
-def get_content_from_snippet(snippet):
-    match = snippet_content_regex.search(snippet)
-    return match.group('content')
+def which(program):
+    mode = os.X_OK
+    fpath, fname = os.path.split(program)
 
-def parse_snippet_content(string):
-    match = parse_snippet_regex.search(string)
-    return match.groupdict()
+    if fpath:
+        if is_accessible_file(program, mode):
+            return program
+    else:
+        for path in os.environ['PATH'].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, program)
+            if is_accessible_file(exe_file, mode):
+                return exe_file
+
+    return None
