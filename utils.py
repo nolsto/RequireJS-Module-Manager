@@ -102,15 +102,15 @@ function_pattern = r'(?:\s|{comment_pattern})*?function\s*\('.format(**locals())
 # """, re.VERBOSE|re.MULTILINE)
 
 
-def is_accessible_file(fpath, mode=os.R_OK):
-    return os.path.isfile(fpath) and os.access(fpath, mode)
+def is_accessible_file(filepath, mode=os.R_OK):
+    return os.path.isfile(filepath) and os.access(filepath, mode)
 
 
 def which(program):
     mode = os.X_OK
-    fpath, fname = os.path.split(program)
+    filepath, filename = os.path.split(program)
 
-    if fpath:
+    if filepath:
         if is_accessible_file(program, mode):
             return program
     else:
