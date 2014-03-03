@@ -17,7 +17,7 @@ from template import Template
 PLUGIN_FOLDER = os.path.dirname(os.path.realpath(__file__))
 PLUGIN_NAME = 'RequireJS Module Manager'
 SETTINGS_FILENAME = PLUGIN_NAME + '.sublime-settings'
-SETTING_NAMES = ('node_command', 'r.js_path', 'requirejs_config',
+SETTING_NAMES = ('node_command', 'rjs_path', 'requirejs_config',
                  'quote_style', 'leading_comma_lists', 'leading_comma_vars')
 
 # globals
@@ -38,106 +38,146 @@ class SettingsAdapter(object):
     def __init__(self, settings, folder=PLUGIN_FOLDER):
         self.folder = folder
         self.settings = settings
-        self.prev_settings = dict((name, settings.get(name)) for name in SETTING_NAMES)
+        self.prev_settings = dict((name, None) for name in SETTING_NAMES)
         self.adapted_settings = {}
 
-        self.settings.add_on_change('rjsmm', self.update)
+    @property
+    def settings(self):
+        s = self._settings
+        return dict((name, s.get(name)) for name in SETTING_NAMES if s.has(name))
+
+    @settings.setter
+    def settings(self, value):
+        if hasattr(self, '_settings'):
+            self._settings.clear_on_change('rjsmm')
+        self._settings = value
+        self._settings.add_on_change('rjsmm', self.update)
 
     def get(self, name):
         if name in self.adapted_settings:
             return self.adapted_settings[name]
-        return self.settings.get(name)
+        return self._settings.get(name)
 
     def update(self):
         """Update each setting if actual change occured on it"""
 
         for name in SETTING_NAMES:
-            if self.settings.get(name) != self.prev_settings[name]:
+            if self._settings.get(name) != self.prev_settings[name]:
                 try:
                     # adapt setting if its adapt method is in this class
                     self.adapted_settings[name] = getattr(self, '_adapt_' + name)()
-                except Exception, e:
+                except AttributeError, e:
                     pass
-                self.prev_settings[name] = self.settings.get(name)
-        print self.adapted_settings
+                self.prev_settings[name] = self._settings.get(name)
+            print name, ':', self.get(name)
 
     def _adapt_node_command(self):
         """Locate node binary file"""
 
-        setting = self.settings.get('node_command')
-        command = utils.which(setting)
-        if not command:
-            command = utils.which(os.path.join(self.folder, setting))
-            if not command:
+        setting = self._settings.get('node_command')
+        result = utils.which(setting)
+        if not result:
+            result = utils.which(os.path.join(self.folder, setting))
+            if not result:
                 message = 'Node.js command or binary file cannot be found.'
                 print '%s: %s' % (PLUGIN_NAME, message)
                 return None
-        return os.path.realpath(command)
+        return os.path.realpath(result)
 
     def _adapt_rjs_path(self):
         """Locate r.js file"""
 
-        setting = self.settings.get('r.js_path')
-        path = utils.which(setting)
-        if not path:
+        setting = self._settings.get('rjs_path', '')
+        result = utils.which(setting)
+        if not result:
             if utils.is_accessible_file(setting):
-                path = setting
+                result = setting
             else:
-                path = os.path.join(self.folder, setting)
-                if not utils.is_accessible_file(path):
+                result = os.path.join(self.folder, setting)
+                if not utils.is_accessible_file(result):
                     message = 'r.js command or file path cannot be found.'
                     print '%s: %s' % (PLUGIN_NAME, message)
                     return None
-        return os.path.realpath(path)
+        return os.path.realpath(result)
+
+    def _adapt_requirejs_config(self):
+        """Determine requirejs config object"""
+
+        setting = self._settings.get('requirejs_config')
+        if type(setting) is dict:
+            result = setting
+            return result
+        elif type(setting) is unicode:
+            if utils.is_accessible_file(setting):
+                result = setting
+            else:
+                result = os.path.join(self.folder, setting)
+                if not utils.is_accessible_file(result):
+                    message = 'RequireJS config file path %s cannot be found' % setting
+                    print '%s: %s' % (PLUGIN_NAME, message)
+                    return None
+        else:
+            message = 'RequireJS config setting must be either a valid JSON object or file path'
+            print '%s: %s' % (PLUGIN_NAME, message)
+            return None
+        return os.path.realpath(result)
 
 
-class RequireJSModuleCommand(WindowCommand):
+class RequireJSModuleDependencyCommand(WindowCommand):
     """docstring for RequireJSModuleDependencyCommand"""
 
 
-class AddRequirejsModuleCommand(RequireJSModuleCommand):
+class AddRequirejsModuleDependencyCommand(RequireJSModuleDependencyCommand):
 
     def run(self):
-        global windows_settings
-
-        window = self.window
+        global settings, windows_settings
 
         # find first folder in the project
         try:
-            folder = window.folders()[0]
+            folder = self.window.folders()[0]
         except IndexError as e:
             message = 'Command must be run in a project with at least one folder.'
             print '%s: %s' % (PLUGIN_NAME, message)
             return
 
+        view_settings = self.window.active_view().settings()
         try:
-            window_settings = windows_settings[window.id()]
+            window_settings = windows_settings[self.window.id()]
         except KeyError, e:
-            settings = window.active_view().settings()
-            window_settings = SettingsAdapter(settings, folder)
-            windows_settings[window.id()] = window_settings
+            window_settings = SettingsAdapter(view_settings, folder)
+            windows_settings[self.window.id()] = window_settings
         else:
-            pass
-        finally:
-            pass
+            window_settings.folder = folder
+            window_settings.settings = view_settings
 
-        # for view in self.window.views():
-        #     view.settings().clear_on_change('rjsmm')
+        # ('node_command', 'rjs_path', 'requirejs_config',
+        #  'quote_style', 'leading_comma_lists', 'leading_comma_vars')
+        node_command = window_settings.get('node_command') or settings.get('node_command')
+        rjs_path = window_settings.get('rjs_path') or settings.get('rjs_path')
+        requirejs_config = window_settings.get('requirejs_config') or settings.get('requirejs_config')
 
-        # self.view = self.window.active_view()
-        # self.view.settings().add_on_change('rjsmm', self.update_settings)
+        if type(requirejs_config) is unicode:
+            script = os.path.join(PLUGIN_FOLDER, 'scripts/parse_requirejs_config.js')
+            cmd = [node_command, script, rjs_path, requirejs_config]
+            try:
+                proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+                stdout, stderr = proc.communicate()
+                if stderr:
+                    message = 'no requirejs config object found in %s' % setting
+                    print '%s: %s' % (PLUGIN_NAME, message)
+                    return
+                requirejs_config = json.loads(stdout)
+            except Exception as e:
+                raise
 
-        # if not hasattr(self, 'node_command'): self.update_node_command()
-        # if not hasattr(self, 'rjs_path'): self.update_rjs_path()
-        # if not hasattr(self, 'rjs_config'): self.update_rjs_config()
 
-        # # create module collection
-        # self.module_collection = ModuleCollection(folder, self.rjs_config)
-        # self.items = ['> Input module path...'] + self.module_collection.ids
+        # create module collection
+        self.module_collection = ModuleCollection(folder, requirejs_config)
+        self.items = ['> Input module path...'] + self.module_collection.ids
 
-        # self.window.show_quick_panel(self.items,
-        #                              self.handle_path_panel_response,
-        #                              sublime.MONOSPACE_FONT, 0)
+        self.window.show_quick_panel(self.items,
+                                     self.handle_path_panel_response,
+                                     sublime.MONOSPACE_FONT, 0)
 
 
     # def update_settings(self):

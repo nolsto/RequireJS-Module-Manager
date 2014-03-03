@@ -7,7 +7,7 @@
   // A version of r.js is included with the plugin and used by default,
   // but you can specify your own to use. Can either be an absolute path
   // or a path relative to the first folder in your project. Example:
-  "r.js_path": "/usr/local/share/npm/bin/r.js",
+  // "rjs_path": "/usr/local/share/npm/bin/r.js",
 
   // Can be either a RequireJS config object or a path to a js file containing
   // a requirejs.config relative to the first folder in the project. Example:
@@ -20,8 +20,7 @@
 
   // If no dependency paths are listed, insert the added path string
   // in either 'single' or "double" quotes.
-  "quote_style": "double",
-  // "quote_style": "single",
+  "quote_style": "single",
 
   // If the define template module dependency array and/or arguments
   // are separated by new lines, insert commas following the new line.
