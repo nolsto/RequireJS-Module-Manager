@@ -1,5 +1,6 @@
 import os
 import re
+from contextlib import contextmanager
 
 
 # matches all strings enclosed in quotation marks
@@ -102,6 +103,16 @@ function_pattern = r'(?:\s|{comment_pattern})*?function\s*\('.format(**locals())
 # """, re.VERBOSE|re.MULTILINE)
 
 
+@contextmanager
+def chdir(dirname=None):
+    curdir = os.getcwd()
+    os.chdir(dirname)
+    try:
+        yield
+    finally:
+        os.chdir(curdir)
+
+
 def is_accessible_file(filepath, mode=os.R_OK):
     return os.path.isfile(filepath) and os.access(filepath, mode)
 
@@ -119,5 +130,4 @@ def which(program):
             exe_file = os.path.join(path, program)
             if is_accessible_file(exe_file, mode):
                 return exe_file
-
     return None

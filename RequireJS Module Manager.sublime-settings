@@ -1,25 +1,40 @@
 {
-  // Change this to the explicit path of the node.js binary file if it is
-  // located in a directory not seen by Sublime Text's PATH variable. Example:
-  //"node_command": "/usr/local/bin/node",
+  // If node is seen by Sublime Text's PATH, the plugin will use it. If not,
+  // specify your own to use.
+  // If set in Package Settings, the path is relative to the RequireJS Module
+  // Manager package folder. If set in a project's settings (*.sublime-project),
+  // the path is relative to the first folder included in the project.
+  // Example:
+  // "node_command": "/usr/local/bin/node",
   "node_command": "node",
 
-  // A version of r.js is included with the plugin and used by default,
-  // but you can specify your own to use. Can either be an absolute path
-  // or a path relative to the first folder in your project. Example:
+  // If r.js is seen by Sublime Text's PATH, the plugin will use it. If not,
+  // the plugin will use a version included with it. You can specify your own
+  // as well.
+  // If set in Package Settings, the path is relative to the RequireJS Module
+  // Manager package folder. If set in a project's settings (*.sublime-project),
+  // the path is relative to the first folder included in the project.
+  // Examples:
   // "rjs_path": "/usr/local/share/npm/bin/r.js",
+  // "rjs_path": "lib/r.js",
+  "rjs_path": "r.js",
 
-  // Can be either a RequireJS config object or a path to a js file containing
-  // a requirejs.config relative to the first folder in the project. Example:
-  //"requirejs_config": "path/to/config.js"
+  // Can be either a RequireJS config object in JSON format that includes at
+  // minimum "baseUrl", or a path to a js file containing a requirejs.config
+  // relative to the first folder in the project.
+  // If set in Package Settings, the path is relative to the RequireJS Module
+  // Manager package folder. If set in a project's settings (*.sublime-project),
+  // the path is relative to the first folder included in the project.
+  // Example:
+  // "requirejs_config": "path/to/config.js"
   "requirejs_config": {
     "appDir": ".",
     "baseUrl": ".",
     "paths": {}
   },
 
-  // If no dependency paths are listed, insert the added path string
-  // in either 'single' or "double" quotes.
+  // If no dependency paths are listed to infer from, insert the added path
+  // string in either 'single' or "double" quotes.
   "quote_style": "single",
 
   // If the define template module dependency array and/or arguments

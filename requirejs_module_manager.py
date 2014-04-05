@@ -2,7 +2,6 @@ import json
 import os
 import re
 import sys
-from itertools import izip_longest
 from subprocess import PIPE, Popen
 
 import sublime
@@ -21,14 +20,14 @@ SETTING_NAMES = ('node_command', 'rjs_path', 'requirejs_config',
                  'quote_style', 'leading_comma_lists', 'leading_comma_vars')
 
 # globals
-settings = None
+package_settings = None
 windows_settings = None
 
 
 def plugin_loaded():
-    global settings, windows_settings
+    global package_settings, windows_settings
 
-    settings = SettingsAdapter(sublime.load_settings(SETTINGS_FILENAME))
+    package_settings = SettingsAdapter(sublime.load_settings(SETTINGS_FILENAME))
     windows_settings = {}
 
 
@@ -37,9 +36,9 @@ class SettingsAdapter(object):
 
     def __init__(self, settings, folder=PLUGIN_FOLDER):
         self.folder = folder
-        self.settings = settings
         self.prev_settings = dict((name, None) for name in SETTING_NAMES)
         self.adapted_settings = {}
+        self.settings = settings
 
     @property
     def settings(self):
@@ -48,10 +47,12 @@ class SettingsAdapter(object):
 
     @settings.setter
     def settings(self, value):
+        # TODO check for existence too. ST may have nullified it if view closed
         if hasattr(self, '_settings'):
             self._settings.clear_on_change('rjsmm')
         self._settings = value
         self._settings.add_on_change('rjsmm', self.update)
+        self.update()
 
     def get(self, name):
         if name in self.adapted_settings:
@@ -74,31 +75,29 @@ class SettingsAdapter(object):
     def _adapt_node_command(self):
         """Locate node binary file"""
 
-        setting = self._settings.get('node_command')
-        result = utils.which(setting)
-        if not result:
-            result = utils.which(os.path.join(self.folder, setting))
+        with utils.chdir(self.folder):
+            setting = self._settings.get('node_command')
+            result = utils.which(setting)
             if not result:
-                message = 'Node.js command or binary file cannot be found.'
+                message = 'Node.js command or binary file %s cannot be found.' % setting
                 print '%s: %s' % (PLUGIN_NAME, message)
                 return None
-        return os.path.realpath(result)
+            return os.path.realpath(result)
 
     def _adapt_rjs_path(self):
         """Locate r.js file"""
 
-        setting = self._settings.get('rjs_path', '')
-        result = utils.which(setting)
-        if not result:
-            if utils.is_accessible_file(setting):
-                result = setting
-            else:
-                result = os.path.join(self.folder, setting)
-                if not utils.is_accessible_file(result):
-                    message = 'r.js command or file path cannot be found.'
+        with utils.chdir(self.folder):
+            setting = self._settings.get('rjs_path', '')
+            result = utils.which(setting)
+            if not result:
+                if utils.is_accessible_file(setting):
+                    result = setting
+                else:
+                    message = 'r.js command or file path %s cannot be found.' % setting
                     print '%s: %s' % (PLUGIN_NAME, message)
                     return None
-        return os.path.realpath(result)
+            return os.path.realpath(result)
 
     def _adapt_requirejs_config(self):
         """Determine requirejs config object"""
@@ -108,19 +107,18 @@ class SettingsAdapter(object):
             result = setting
             return result
         elif type(setting) is unicode:
-            if utils.is_accessible_file(setting):
-                result = setting
-            else:
-                result = os.path.join(self.folder, setting)
-                if not utils.is_accessible_file(result):
+            with utils.chdir(self.folder):
+                if utils.is_accessible_file(setting):
+                    result = setting
+                else:
                     message = 'RequireJS config file path %s cannot be found' % setting
                     print '%s: %s' % (PLUGIN_NAME, message)
                     return None
+                return os.path.realpath(result)
         else:
             message = 'RequireJS config setting must be either a valid JSON object or file path'
             print '%s: %s' % (PLUGIN_NAME, message)
             return None
-        return os.path.realpath(result)
 
 
 class RequireJSModuleDependencyCommand(WindowCommand):
@@ -130,7 +128,7 @@ class RequireJSModuleDependencyCommand(WindowCommand):
 class AddRequirejsModuleDependencyCommand(RequireJSModuleDependencyCommand):
 
     def run(self):
-        global settings, windows_settings
+        global package_settings, windows_settings
 
         # find first folder in the project
         try:
@@ -150,33 +148,34 @@ class AddRequirejsModuleDependencyCommand(RequireJSModuleDependencyCommand):
             window_settings.folder = folder
             window_settings.settings = view_settings
 
-        # ('node_command', 'rjs_path', 'requirejs_config',
-        #  'quote_style', 'leading_comma_lists', 'leading_comma_vars')
-        node_command = window_settings.get('node_command') or settings.get('node_command')
-        rjs_path = window_settings.get('rjs_path') or settings.get('rjs_path')
-        requirejs_config = window_settings.get('requirejs_config') or settings.get('requirejs_config')
+        node_command = window_settings.get('node_command') or package_settings.get('node_command')
+        rjs_path = window_settings.get('rjs_path') or package_settings.get('rjs_path')
+        requirejs_config = window_settings.get('requirejs_config') or package_settings.get('requirejs_config')
+
+        if not (node_command and rjs_path and requirejs_config):
+            message = 'Missing necessary settings'
+            print '%s: %s' % (PLUGIN_NAME, message)
+            return
 
         if type(requirejs_config) is unicode:
-            script = os.path.join(PLUGIN_FOLDER, 'scripts/parse_requirejs_config.js')
+            script = os.path.join(PLUGIN_FOLDER, 'js/parse_requirejs_config.js')
             cmd = [node_command, script, rjs_path, requirejs_config]
             try:
                 proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
                 stdout, stderr = proc.communicate()
                 if stderr:
-                    message = 'no requirejs config object found in %s' % setting
+                    message = 'no requirejs config object found in %s' % requirejs_config
                     print '%s: %s' % (PLUGIN_NAME, message)
                     return
                 requirejs_config = json.loads(stdout)
             except Exception as e:
                 raise
 
-
         # create module collection
         self.module_collection = ModuleCollection(folder, requirejs_config)
-        self.items = ['> Input module path...'] + self.module_collection.ids
+        items = ['Input module path...'] + self.module_collection.ids
 
-        self.window.show_quick_panel(self.items,
-                                     self.handle_path_panel_response,
+        self.window.show_quick_panel(items, self.handle_id_panel_response,
                                      sublime.MONOSPACE_FONT, 0)
 
 
@@ -269,48 +268,27 @@ class AddRequirejsModuleDependencyCommand(RequireJSModuleDependencyCommand):
     #     return self.view.settings().get(prop, settings.get(prop))
 
 
-    def handle_path_panel_response(self, index):
+    def handle_id_panel_response(self, index):
+        print index
         if index is -1:
             return
         if index is 0:
-            self.window.show_input_panel('Path to module:', '',
-                                         self.handle_id_or_resource_input,
-                                         None, None)
+            self.window.show_input_panel('Module id or path:', '',
+                                         self.handle_id_input, None, None)
             return
         module_id = self.module_collection.ids[index - 1]
-        (module_varname, ext) = os.path.splitext(os.path.basename(module_id))
-        self.handle_id_or_resource_input(module_id, module_varname)
+        self.handle_id_input(module_id)
 
 
-    def handle_name_panel_response(self, index):
-        if index is -1:
-            return
-        if index is 0:
-            self.window.show_input_panel("Module's variable name:", '',
-                                         self.handle_id_or_resource_input,
-                                         None, None)
-            return
-        # module_id = self.module_collection.ids[index - 1]
-        # (module_varname, ext) = path.splitext(path.basename(module_id))
-        # self.handle_id_or_resource_input(module_id, module_varname)
-        # search = 'poo'
-        # edit = self.view.begin_edit()
-        # self.window.run_command('show_overlay', {'overlay': 'goto',
-        #                                          'text': '@%s' % search})
-        # self.view.run_command('insert_snippet',
-        #                       {"name": "Packages/User/console-log.sublime-snippet"})
-        # self.view.run_command('example')
-        # self.view.end_edit(edit)
-
-
-    def handle_id_or_resource_input(self, input, varname=''):
-        self.window.show_input_panel('Module variable name:', varname,
+    def handle_id_input(self, inputstr):
+        (module_varname, ext) = os.path.splitext(os.path.basename(inputstr))
+        self.window.show_input_panel('Module variable name:', module_varname,
                                      self.handle_varname_input, None, None)
-        print 'id/resource: ', input
+        print 'id: ', inputstr
 
 
-    def handle_varname_input(self, input):
-        print 'varname: ', input
+    def handle_varname_input(self, inputstr):
+        print 'varname: ', inputstr
         # self.create_define_enclosure()
 
 
@@ -331,7 +309,7 @@ class AddRequirejsModuleDependencyCommand(RequireJSModuleDependencyCommand):
     #     self.view.end_edit(edit)
 
 
-class RemoveRequirejsModuleDependencyCommand(WindowCommand):
+class RemoveRequirejsModuleDependencyCommand(RequireJSModuleDependencyCommand):
 
     def run(self):
         pass

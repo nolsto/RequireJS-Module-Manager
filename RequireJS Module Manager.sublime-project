@@ -2,8 +2,11 @@
 	"folders":
 	[
 		{
-			"path": ".",
-			"file_exclude_patterns": ["*.sublime-workspace"]
+			"file_exclude_patterns":
+			[
+				"*.sublime-workspace"
+			],
+			"path": "/Users/nolan/Projects/RequireJS Module Manager"
 		}
 	]
 }
