@@ -15,24 +15,42 @@ def strip_ext_if_js(filename):
     return root if ext == '.js' else filename
 
 
-class ModuleCollection:
+class DependencyCollection(object):
+
+    def __init__(self, **kwargs):
+        for key, val in kwargs.iteritems():
+            setattr(self, key, val)
+
+    # def __str__(self):
+    #     return json.dumps('map': self.)
+
+    @property
+    def ids(self):
+        return self.collection.keys()
+
+    @property
+    def vars(self):
+        return self.collection.values()
+
+
+class ModuleCollection(object):
 
     def __init__(self, folder, config={}):
         # folder should be the first folder listed in the project side bar.
         # config is the requirejs config json object
 
+        paths = config.get('paths', {})
         appDir = config.get('appDir', os.curdir)
         baseUrl = config.get('baseUrl', os.curdir)
         basedir = os.path.normpath(os.path.join(folder, appDir, baseUrl))
         collection = []
-        items = [(None, '.')] + config['paths'].items()
+        items = [(None, '.')] + paths.items()
 
-        for k, v in items:
-            collection += self.collect(basedir, v, k)
+        for key, val in items:
+            collection += self.collect(basedir, val, key)
 
         collection.sort(key=itemgetter(0))
         self.collection = collection
-
 
     def collect(self, basedir, relpath, modname=''):
         with utils.chdir(basedir):
@@ -61,16 +79,9 @@ class ModuleCollection:
                     abspaths.append(abspath)
         return zip(modules, abspaths)
 
-
-    @property
-    def items(self):
-        return self.collection
-
-
     @property
     def ids(self):
         return [i[0] for i in self.collection]
-
 
     @property
     def resources(self):

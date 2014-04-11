@@ -1,0 +1,4 @@
+[
+  { "caption": "RequireJS Module Manager: Add or Modify Dependency", "command": "add_requirejs_module_dependency" },
+  { "caption": "RequireJS Module Manager: Remove Dependency", "command": "remove_requirejs_module_dependency"}
+]

@@ -28,17 +28,19 @@
   // Example:
   // "requirejs_config": "path/to/config.js"
   "requirejs_config": {
-    "appDir": ".",
     "baseUrl": ".",
     "paths": {}
   },
 
-  // If no dependency paths are listed to infer from, insert the added path
-  // string in either 'single' or "double" quotes.
+  // Space-separated
+  "ignore": ".*",
+
+  // If no dependency paths are listed to infer formatting from, insert the
+  // added path string in either 'single' or "double" quotes.
   "quote_style": "single",
 
-  // If the define template module dependency array and/or arguments
-  // are separated by new lines, insert commas following the new line.
+  // If the module dependency array and/or arguments are separated by new lines,
+  // insert commas following the new line.
   //
   //  define([
   //    'moduleA'
@@ -49,17 +51,5 @@
   //  ) {
   //    ...
   //  });
-  //
-  "leading_comma_lists": true,
-
-  // Separate require dependencies with commas following the new line.
-  // Used with modules structrued as CommonJS
-  //
-  //  define(function (require) {
-  //    var moduleA = require('moduleA')
-  //      , moduleB = require('moduleB');
-  //    ...
-  //  });
-  //
-  "leading_comma_vars": true
+  "leading_comma": true
 }
