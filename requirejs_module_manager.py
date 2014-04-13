@@ -1,26 +1,85 @@
+import fnmatch
 import json
 import os
 import re
 import sys
+from contextlib import contextmanager
+from operator import itemgetter
 from subprocess import PIPE, Popen
 
 import sublime
 from sublime_plugin import WindowCommand
-
-import utils
-from collections import DependencyCollection, ModuleCollection
 
 
 # contants
 PLUGIN_FOLDER = os.path.dirname(os.path.realpath(__file__))
 PLUGIN_NAME = 'RequireJS Module Manager'
 SETTINGS_FILENAME = PLUGIN_NAME + '.sublime-settings'
-SETTING_NAMES = ('node_command', 'rjs_path', 'requirejs_config',
-                 'quote_style', 'ignore', 'leading_comma')
+SETTING_NAMES = ('node_command', 'rjs_path', 'requirejs_config', 'quote_style',
+                 'ignore', 'sort_dependencies', 'leading_comma')
 
 # globals
 package_settings = None
 windows_settings = None
+
+
+@contextmanager
+def chdir(dirname=None):
+    curdir = os.getcwd()
+    os.chdir(dirname)
+    try:
+        yield
+    finally:
+        os.chdir(curdir)
+
+
+def is_accessible_file(filepath, mode=os.R_OK):
+    return os.path.isfile(filepath) and os.access(filepath, mode)
+
+
+def which(program):
+    mode = os.X_OK
+    filepath, filename = os.path.split(program)
+
+    if filepath:
+        if is_accessible_file(program, mode):
+            return program
+    else:
+        for path in os.environ['PATH'].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, program)
+            if is_accessible_file(exe_file, mode):
+                return exe_file
+    return None
+
+
+def strip_ext_if_js(filename):
+    (root, ext) = os.path.splitext(filename)
+    return root if ext == '.js' else filename
+
+
+def var_sort(key):
+    return ' ' if key else '~'
+
+
+def id_sort(key):
+    match = re.search('^(https?\:\/\/)?((?:\.)+?(?=/))?(/)?', key)
+    if match.group(1):
+        # protocol: begins with http(s)://
+        # order on top
+        return '   ' + key
+    elif match.group(2):
+        # relative directory: begins with .(.)/
+        # order it on bottom
+        return key
+    elif match.group(3):
+        # root directory: begins with /
+        # order it below protocol
+        return ' ' + key
+    else:
+        # id: begins with normal alphanumeric character
+        # order it below protocol and root directory
+        return '  ' + key
 
 
 def plugin_loaded():
@@ -30,8 +89,9 @@ def plugin_loaded():
     windows_settings = {}
 
 
+
+
 class SettingsAdapter(object):
-    """docstring for SettingsAdapter"""
 
     def __init__(self, settings, folder=PLUGIN_FOLDER):
         self.folder = folder
@@ -64,7 +124,7 @@ class SettingsAdapter(object):
         for name in SETTING_NAMES:
             if self._settings.get(name) != self.prev_settings[name]:
                 try:
-                    # adapt setting if its adapt method is in this class
+                    # adapt setting if its _adapt_ method is in this class
                     self.adapted_settings[name] = getattr(self, '_adapt_' + name)()
                 except AttributeError, e:
                     pass
@@ -73,9 +133,9 @@ class SettingsAdapter(object):
     def _adapt_node_command(self):
         """Locate node binary file"""
 
-        with utils.chdir(self.folder):
+        with chdir(self.folder):
             setting = self._settings.get('node_command')
-            result = utils.which(setting)
+            result = which(setting)
             if not result:
                 message = 'Node.js command or binary file %s cannot be found.' % setting
                 print '%s: %s' % (PLUGIN_NAME, message)
@@ -85,11 +145,11 @@ class SettingsAdapter(object):
     def _adapt_rjs_path(self):
         """Locate r.js file"""
 
-        with utils.chdir(self.folder):
+        with chdir(self.folder):
             setting = self._settings.get('rjs_path', '')
-            result = utils.which(setting)
+            result = which(setting)
             if not result:
-                if utils.is_accessible_file(setting):
+                if is_accessible_file(setting):
                     result = setting
                 else:
                     message = 'r.js command or file path %s cannot be found.' % setting
@@ -105,8 +165,8 @@ class SettingsAdapter(object):
             result = setting
             return result
         elif type(setting) is unicode:
-            with utils.chdir(self.folder):
-                if utils.is_accessible_file(setting):
+            with chdir(self.folder):
+                if is_accessible_file(setting):
                     result = setting
                 else:
                     message = 'RequireJS config file path %s cannot be found' % setting
@@ -118,9 +178,16 @@ class SettingsAdapter(object):
             print '%s: %s' % (PLUGIN_NAME, message)
             return None
 
+    def _adapt_ignore(self):
+        """Convert the string into a pattern"""
+
+        setting = self._settings.get('ignore')
+        patterns = setting.strip().split()
+        pattern = re.compile('|'.join(fnmatch.translate(p) for p in patterns))
+        return pattern
+
 
 class Settings(object):
-    """docstring for Settings"""
 
     def __init__(self, window_settings):
         self.window_settings = window_settings
@@ -128,11 +195,115 @@ class Settings(object):
     def __getattr__(self, attr):
         global package_settings
 
-        return self.window_settings.get(attr) or package_settings.get(attr)
+        window_setting = self.window_settings.get(attr)
+        package_setting = package_settings.get(attr)
+        return window_setting if window_setting != None else package_setting
+
+
+
+
+class Collection(object):
+
+    def __init__(self, collection):
+        self._collection = collection
+
+    def __str__(self):
+        return json.dumps(self._collection)
+
+    @property
+    def items(self):
+        return self._collection[:]
+
+    @property
+    def keys(self):
+        return [k for k, v in self._collection]
+
+    @property
+    def values(self):
+        return [v for k, v in self._collection]
+
+    def append(self, *args, **kwargs):
+        self._collection.append(*args, **kwargs)
+
+    def sort(self, *args, **kwargs):
+        self._collection.sort(*args, **kwargs)
+
+    def keyof(self, value):
+        return next((k for k, v in self._collection if v == value), None)
+
+    def valueof(self, key):
+        return next((v for k, v in self._collection if k == key), None)
+
+    def filter_keys(self):
+        c = self._collection
+        result = []
+        for i, el in enumerate(c):
+            if el[0] not in [k for k, v in c[i+1:]]:
+                result.append(el)
+        self._collection = result
+
+    def filter_values(self):
+        # same as filter on keys except doesn't compare values of None
+        c = self._collection
+        result = []
+        for i, el in enumerate(c):
+            if el[1] == None or el[1] not in [v for k, v in c[i+1:]]:
+                result.append(el)
+        self._collection = result
+
+
+class ModuleCollection(Collection):
+
+    def __init__(self, folder, ignore, config={}):
+        # folder should be the first folder listed in the project side bar.
+        # config is the requirejs config json object
+
+        paths = config.get('paths', {})
+        appDir = config.get('appDir', os.curdir)
+        baseUrl = config.get('baseUrl', os.curdir)
+        basedir = os.path.normpath(os.path.join(folder, appDir, baseUrl))
+
+        def collect(relpath, modname=''):
+            # if the path is not a directory, return the item
+            if not os.path.isdir(relpath):
+                filename = os.path.split(relpath)[1]
+                stripped_filename = strip_ext_if_js(filename)
+                abspath = os.path.normpath(os.path.join(basedir, relpath))
+                return [(modname, abspath)]
+
+            os.chdir(relpath)
+
+            (modules, abspaths) = ([], [])
+
+            for path, dirnames, filenames in os.walk('.'):
+                dirnames[:] = [d for d in dirnames if not re.match(ignore, d)]
+                filenames[:] = [f for f in filenames if not re.match(ignore, f)]
+
+                for filename in filenames:
+                    stripped_filename = strip_ext_if_js(filename)
+                    module = os.path.normpath(os.path.join(path, stripped_filename))
+                    if modname:
+                        module = os.path.join(modname, module)
+                    abspath = os.path.normpath(os.path.join(basedir, relpath,
+                                                            path, filename))
+                    modules.append(module)
+                    abspaths.append(abspath)
+            return zip(modules, abspaths)
+
+        collection = []
+        items = [(None, '.')] + paths.items()
+
+        for key, value in items:
+            with chdir(basedir):
+                collection += collect(value, key)
+
+        self._collection = collection
+        self.sort(key=itemgetter(0))
+
+
 
 
 class RequireJSModuleDependencyCommand(WindowCommand):
-    """docstring for RequireJSModuleDependencyCommand"""
 
     def setup(self):
         global windows_settings
@@ -158,61 +329,119 @@ class RequireJSModuleDependencyCommand(WindowCommand):
         self.folder = folder
         self.settings = Settings(window_settings)
 
-    def findDeps(self):
+    def extractDeps(self):
         view = self.window.active_view()
         contents = view.substr(sublime.Region(0, view.size()))
         selection = view.sel()[0]
 
         script = os.path.join(PLUGIN_FOLDER, 'js/get_dependencies.js')
-        cmd = (self.settings.node_command, script, self.settings.rjs_path, contents,
-               '%d,%d' % (selection.begin(), selection.end()))
+        cmd = (self.settings.node_command, script, self.settings.rjs_path,
+               contents, str(selection.begin()), str(selection.end()))
         proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
         stdout, stderr = proc.communicate()
-
         if stderr:
             print '%s: %s' % (PLUGIN_NAME, stderr)
             raise Exception()
 
         try:
             result = json.loads(stdout)
-            self.deps = DependencyCollection(**result)
+            self.deps_node = result['node']
+            self.deps = Collection(result['collection'])
+            self.dep_id = result['id']
+            self.dep_var = result['var']
         except Exception, e:
             message = 'Unable to extract any dependencies.'
             print '%s: %s' % (PLUGIN_NAME, message)
             raise
 
+    def insertDeps(self):
+        view = self.window.active_view()
+        contents = view.substr(sublime.Region(0, view.size()))
+
+        script = os.path.join(PLUGIN_FOLDER, 'js/modify_dependencies.js')
+        cmd = (self.settings.node_command, script, self.settings.rjs_path,
+               contents, json.dumps(self.deps_node), str(self.deps),
+               str(self.var_changes), str(int(self.settings.leading_comma)))
+        proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+        stdout, stderr = proc.communicate()
+        if stderr:
+            message = 'I done fucked up'
+            print '%s: %s' % (PLUGIN_NAME, message)
+            raise Exception()
+        print stdout
+
 
 class AddRequirejsModuleDependencyCommand(RequireJSModuleDependencyCommand):
-    """docstring for AddRequirejsModuleDependencyCommand"""
+
+    def modifyDeps(self):
+        dep_id = self.dep_id
+        dep_var = self.dep_var or None
+
+        if [dep_id, dep_var] in self.deps.items:
+            message = 'No modifications to dependencies.'
+            print '%s: %s' % (PLUGIN_NAME, message)
+            raise Exception()
+
+        orig_items = self.deps.items
+
+        self.deps.append([dep_id, dep_var])
+
+        # remove all but the last item where id is repeated, repeat for var name
+        self.deps.filter_keys()
+        self.deps.filter_values()
+
+        # sort items on id then on has/doesn't have var name
+        if self.settings.sort_dependencies:
+            self.deps.sort(key=lambda x: id_sort(x[0]))
+
+        self.deps.sort(key=lambda x: var_sort(x[1]))
+
+        # get a collection of changed var names
+        var_changes = [(v, self.deps.valueof(k)) for k, v in orig_items \
+                       if self.deps.valueof(k) != v]
+        var_changes = filter(lambda x: (x[0] != None and x[1] != None), var_changes)
+        self.var_changes = Collection(var_changes)
+
+        self.insertDeps()
 
     def run(self):
         self.setup()
-        self.findDeps()
+        self.extractDeps()
 
-        print self.deps.collection
-        if self.deps.id:
-            self.handle_id_input(self.deps.id)
+        if self.dep_id:
+            self.handle_id_input(self.dep_id)
+            return
+
+        if type(self.settings.requirejs_config) is unicode:
+            script = os.path.join(PLUGIN_FOLDER, 'js/get_requirejs_config.js')
+            cmd = (self.settings.node_command, script,
+                   self.settings.rjs_path, self.settings.requirejs_config)
+            proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+            stdout, stderr = proc.communicate()
+            if stderr:
+                message = 'no requirejs config object found in %s' % \
+                          self.settings.requirejs_config
+                print '%s: %s' % (PLUGIN_NAME, message)
+                raise Exception()
+            requirejs_config = json.loads(stdout)
         else:
-            if type(self.settings.requirejs_config) is unicode:
-                script = os.path.join(PLUGIN_FOLDER, 'js/get_requirejs_config.js')
-                cmd = (self.settings.node_command, script,
-                       self.settings.rjs_path, self.settings.requirejs_config)
-                proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-                stdout, stderr = proc.communicate()
-                if stderr:
-                    message = 'no requirejs config object found in %s' % self.settings.requirejs_config
-                    print '%s: %s' % (PLUGIN_NAME, message)
-                    return
-                requirejs_config = json.loads(stdout)
-            else:
-                requirejs_config = self.settings.requirejs_config
+            requirejs_config = self.settings.requirejs_config
 
-            # create module collection
-            self.module_collection = ModuleCollection(self.folder, requirejs_config)
-            self.request_id(0)
+        # create module collection
+        self.modules = ModuleCollection(self.folder, self.settings.ignore, requirejs_config)
+        self.request_id()
 
-    def request_id(self, preindex):
-        items = ['Input module ID or path...'] + self.module_collection.ids
+    def request_id(self):
+        preindex = -1
+        if self.dep_var:
+            dep_id = self.deps.keyof(self.dep_var)
+            try:
+                preindex = self.modules.keys.index(dep_id)
+            except ValueError:
+                pass
+        preindex += 1
+
+        items = [':Input module ID or path...'] + self.modules.keys
         self.window.show_quick_panel(items, self.handle_id_panel_response,
                                      sublime.MONOSPACE_FONT, preindex)
 
@@ -223,63 +452,88 @@ class AddRequirejsModuleDependencyCommand(RequireJSModuleDependencyCommand):
     def handle_id_panel_response(self, index):
         if index is -1:
             return
+
         if index is 0:
             prefill = ''
-            if self.deps.var:
-                ids = self.deps.ids
-                collection = self.deps.collection
-                var = self.deps.var
-                prefill = next((val for val in ids if collection[val] == var), None)
+            if self.dep_var:
+                prefill = self.deps.keyof(self.dep_var)
             self.window.show_input_panel('Module ID or path:', prefill,
                                          self.handle_id_input, None, None)
             return
-        module_id = self.module_collection.ids[index - 1]
+        module_id = self.modules.keys[index - 1]
         self.handle_id_input(module_id)
 
     def handle_id_input(self, module_id):
+        module_id = unicode(module_id).strip()
+        if not module_id:
+            return
+
         prefill = None
 
-        if module_id in self.deps.collection:
-            prefill = self.deps.collection[module_id]
+        if module_id in self.deps.keys:
+            prefill = self.deps.valueof(module_id)
 
         if not prefill:
             (basename, ext) = os.path.splitext(os.path.basename(module_id))
             prefill = basename
 
-        if not self.deps.var:
+        if not self.dep_var:
             self.request_varname(prefill)
 
-        # self.deps.id = module_id
+        self.dep_id = module_id
 
+        if self.dep_id and self.dep_var != None:
+            self.modifyDeps()
 
-    def handle_varname_input(self, module_varname):
-        ids = self.deps.ids
-        collection = self.deps.collection
-        module_id = next((val for val in ids if collection[val] == module_varname), None)
+    def handle_varname_input(self, module_var):
+        self.dep_var = unicode(module_var).strip()
 
-        if module_id:
-            # find index
-            pass
-        else:
-            pass
-
-        if not self.deps.id:
-            self.request_id(0)
-
-        # self.deps.id = module_id
+        if self.dep_id and self.dep_var != None:
+            self.modifyDeps()
 
 
 class RemoveRequirejsModuleDependencyCommand(RequireJSModuleDependencyCommand):
-    """docstring for RemoveRequirejsModuleDependencyCommand"""
+
+    def modifyDeps(self):
+        dep_id = self.dep_id
+        dep_var = self.deps.valueof(dep_id)
+        deps = self.deps.items
+        deps.remove([dep_id, dep_var])
+
+        self.deps = Collection(deps)
+        self.var_changes = Collection([])
+
+        self.insertDeps()
 
     def run(self):
         self.setup()
+        self.extractDeps()
+        self.request_id()
 
-        # self.window.show_quick_panel(items, self.handle_id_panel_response,
-        #                              sublime.MONOSPACE_FONT, 0)
+    def request_id(self):
+        if self.dep_id:
+            dep_id = self.dep_id
+        elif self.dep_var:
+            dep_id = self.deps.keyof(self.dep_var)
+
+        try:
+            index = self.deps.keys.index(dep_id)
+        except Exception:
+            self.window.show_quick_panel(self.deps.keys,
+                                         self.handle_id_panel_response,
+                                         sublime.MONOSPACE_FONT)
+        else:
+            self.handle_id_panel_response(index)
 
     def handle_id_panel_response(self, index):
-        pass
+        if index is -1:
+            return
+
+        dep_id = self.deps.keys[index]
+        self.dep_id = dep_id
+        self.modifyDeps()
+
+
 
 
 if sys.version_info < (3,):

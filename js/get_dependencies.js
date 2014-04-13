@@ -4,9 +4,7 @@ var shared = require('shared')
   , args = process.argv.slice(2)
   , requirejs = require(args[0])
   , contents = args[1]
-  , selection = (args[2].split(',')).map(function (n) {
-    return parseInt(n, 10);
-  })
+  , selection = [parseInt(args[2], 10), parseInt(args[3], 10)]
   , selectionContents = contents.substring(selection[0], selection[1]);
 
 requirejs.tools.useLib(function (require) {
@@ -37,15 +35,26 @@ requirejs.tools.useLib(function (require) {
       return process.stderr.write('Unable to manage dependencies for modules using a CommonJS wrapper.');
     }
 
+    // extract the dependency array node, exit if it has duplicate elements
     depArrayNode = shared.getDepArrayNode(matchNode);
-    factoryNode = shared.getFactoryNode(matchNode);
-    depCollection = {};
+    if (depArrayNode && !shared.hasUniqueAttrValues(depArrayNode.elements, 'value')) {
+      return process.stderr.write('Repeat module Ids in dependency array.')
+    };
 
-    var id, param, element, i;
+    // extract the factory function node, exit if it has duplicate parameters
+    factoryNode = shared.getFactoryNode(matchNode);
+    if (factoryNode && !shared.hasUniqueAttrValues(factoryNode.params, 'name')) {
+      return process.stderr.write('Repeat variable names in factory function.')
+    };
+
+    depCollection = [];
+
+    var id, param, varname, el, i;
     for (i = 0; i < matchDeps.length; i++) {
       id = matchDeps[i];
       param = factoryNode && factoryNode.params[i];
-      depCollection[id] = param ? param.name : null;
+      varname = param ? param.name : null;
+      depCollection.push([id, varname]);
 
       if (selectedVar || selectedId) {
         continue;
@@ -58,15 +67,15 @@ requirejs.tools.useLib(function (require) {
       }
 
       // match selection to array element
-      element = depArrayNode && depArrayNode.elements[i];
-      if (element && shared.nodeContainsSelection(element, selection, true)) {
-        selectedId = element.value;
+      el = depArrayNode && depArrayNode.elements[i];
+      if (el && shared.nodeContainsSelection(el, selection, true)) {
+        selectedId = el.value;
       }
     };
 
-    process.stdout.write(JSON.stringify({
-      'collection': depCollection,
+    return process.stdout.write(JSON.stringify({
       'node': matchNode,
+      'collection': depCollection,
       'id': selectedId,
       'var': selectedVar
     }));

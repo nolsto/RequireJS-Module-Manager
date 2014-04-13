@@ -1,8 +1,0 @@
-<snippet>
-	<content><![CDATA[
-${3:var ${2:$VAR_PLACEHOLDER} = }require('${1:$PATH_PLACEHOLDER}');
-]]></content>
-	<tabTrigger>require</tabTrigger>
-	<scope>source.js</scope>
-	<description>require (CommonJS)</description>
-</snippet>
