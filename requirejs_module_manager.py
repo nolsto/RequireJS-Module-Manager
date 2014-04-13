@@ -16,7 +16,7 @@ PLUGIN_FOLDER = os.path.dirname(os.path.realpath(__file__))
 PLUGIN_NAME = 'RequireJS Module Manager'
 SETTINGS_FILENAME = PLUGIN_NAME + '.sublime-settings'
 SETTING_NAMES = ('node_command', 'rjs_path', 'requirejs_config', 'quote_style',
-                 'ignore', 'sort_dependencies', 'leading_comma')
+                 'ignore', 'sort_dependencies')
 
 # globals
 package_settings = None
@@ -62,24 +62,22 @@ def var_sort(key):
     return ' ' if key else '~'
 
 
-def id_sort(key):
-    match = re.search('^(https?\:\/\/)?((?:\.)+?(?=/))?(/)?', key)
-    if match.group(1):
-        # protocol: begins with http(s)://
-        # order on top
-        return '   ' + key
-    elif match.group(2):
-        # relative directory: begins with .(.)/
-        # order it on bottom
-        return key
-    elif match.group(3):
-        # root directory: begins with /
-        # order it below protocol
-        return ' ' + key
+def id_sort(key, sort_order):
+    prefix = ' '
+    length = len(sort_order)
+    pattern = '^(?P<remote>https?\:\/\/)?(?P<relative>(?:\.)+?(?=/))?(?P<absolute>/)?'
+    match = re.search(pattern, key)
+    if match.group('remote'):
+        sort_by = 'remote'
+    elif match.group('relative'):
+        sort_by = 'relative'
+    elif match.group('absolute'):
+        sort_by = 'absolute'
     else:
-        # id: begins with normal alphanumeric character
-        # order it below protocol and root directory
-        return '  ' + key
+        sort_by = 'id'
+    count = length - sort_order.index(sort_by) - 1
+    print (prefix * count) + key
+    return (prefix * count) + key
 
 
 def plugin_loaded():
@@ -361,7 +359,8 @@ class RequireJSModuleDependencyCommand(WindowCommand):
         script = os.path.join(PLUGIN_FOLDER, 'js/modify_dependencies.js')
         cmd = (self.settings.node_command, script, self.settings.rjs_path,
                contents, json.dumps(self.deps_node), str(self.deps),
-               str(self.var_changes), str(int(self.settings.leading_comma)))
+               str(self.var_changes))
+        # print ' '.join(cmd)
         proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
         stdout, stderr = proc.communicate()
         if stderr:
@@ -392,7 +391,15 @@ class AddRequirejsModuleDependencyCommand(RequireJSModuleDependencyCommand):
 
         # sort items on id then on has/doesn't have var name
         if self.settings.sort_dependencies:
-            self.deps.sort(key=lambda x: id_sort(x[0]))
+            # wrap the sort function to be called with the current sort order setting
+            def with_setting(f):
+                def wrapper(key):
+                    print "In the wrapper", key, self.settings.sort_order
+                    return f(key, self.settings.sort_order)
+                return wrapper
+            id_sort_with_setting = with_setting(id_sort)
+
+            self.deps.sort(key=lambda x: id_sort_with_setting(x[0]))
 
         self.deps.sort(key=lambda x: var_sort(x[1]))
 
@@ -401,7 +408,7 @@ class AddRequirejsModuleDependencyCommand(RequireJSModuleDependencyCommand):
                        if self.deps.valueof(k) != v]
         var_changes = filter(lambda x: (x[0] != None and x[1] != None), var_changes)
         self.var_changes = Collection(var_changes)
-
+        print self.deps
         self.insertDeps()
 
     def run(self):

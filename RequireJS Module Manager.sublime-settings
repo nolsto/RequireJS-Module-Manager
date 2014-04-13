@@ -1,9 +1,15 @@
 {
+  // All of the settings below can also be set on a per-project basis by
+  // recreating any of them in an individual project's settings
+  // (*.sublime-project) file. If the commands find the setting in the project's
+  // settings while run on a project's window, that setting will be used.
+  // If not, the package-specific version will be used.
+
   // If node is seen by Sublime Text's PATH, the plugin will use it. If not,
   // specify your own to use.
   // If set in Package Settings, the path is relative to the RequireJS Module
-  // Manager package folder. If set in a project's settings (*.sublime-project
-  // file), the path is relative to the first folder included in the project.
+  // Manager package folder. If set in a project's settings (*.sublime-project)
+  // file, the path is relative to the first folder included in the project.
   // Example:
   // "node_command": "/usr/local/bin/node",
   "node_command": "node",
@@ -12,8 +18,8 @@
   // the plugin will use a version of r.js included with it. You can specify
   // your own location as well.
   // If set in Package Settings, the path is relative to the RequireJS Module
-  // Manager package folder. If set in a project's settings (*.sublime-project
-  // file), the path is relative to the first folder included in the project.
+  // Manager package folder. If set in a project's settings (*.sublime-project)
+  // file, the path is relative to the first folder included in the project.
   // Examples:
   // "rjs_path": "/usr/local/share/npm/bin/r.js",
   // "rjs_path": "lib/r.js",
@@ -23,8 +29,8 @@
   // minimum "baseUrl", or a path to a js file containing a requirejs.config
   // relative to the first folder in the project.
   // If set in Package Settings, the path is relative to the RequireJS Module
-  // Manager package folder. If set in a project's settings (*.sublime-project
-  // file), the path is relative to the first folder included in the project.
+  // Manager package folder. If set in a project's settings (*.sublime-project)
+  // file, the path is relative to the first folder included in the project.
   // You will typically always want to recreate this setting in an individual
   // project's settings.
   // Example:
@@ -35,28 +41,22 @@
   },
 
   // Unix shell-style, space-separated list of file and folder ignore patterns.
-  // Matched files will not show in the module id quick panel
+  // Matched files will not show in the module id quick panel.
   "ignore": ".*",
 
-  // Reorders the dependencies list when it is modified or added to
+  // Reorders the dependencies list when it is modified or appended.
   "sort_dependencies": true,
+
+  // If sort_dependencies is true, sort them by the criteria below.
+  // The array must contain these four items, in any order.
+  "sort_order": [
+    "remote",   // http://* or https://*
+    "id",       // *
+    "absolute", // /*
+    "relative"  // ./* or ../*
+  ],
 
   // If no dependencies are available to infer formatting from, insert the
   // added module id or path string in either 'single' or "double" quotes.
-  "quote_style": "single",
-
-  // If multiple dependencies are not available to infer formatting from,
-  // and the module dependency array and/or arguments are separated by new lines,
-  // insert commas following the new line.
-  //
-  //  define([
-  //    'moduleA'
-  //  , 'moduleB'
-  //  ], function(
-  //    moduleA
-  //  , moduleB
-  //  ) {
-  //    ...
-  //  });
-  "leading_comma": false
+  "quote_style": "single"
 }
