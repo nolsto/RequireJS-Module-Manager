@@ -1,6 +1,10 @@
 # RequireJS-Module-Manager
 Sublime Text plugin for adding, removing, and organizing AMD requirements in a JavaScript file using RequireJS and Escope.
 
+This plugin removes the hassle from developing AMD modules with long and changing dependency lists.
+It knows where to find your project's existing modules and allows you to add, modify or remove them as dependencies from a module easily.
+It also keeps your modules' dependencies organized and formatted according to your own preferences.
+
 **Warning! Not ready for primetime yet.**
 
 ## Settings
