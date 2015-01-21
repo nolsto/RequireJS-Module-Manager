@@ -15,8 +15,15 @@ from sublime_plugin import WindowCommand
 PLUGIN_FOLDER = os.path.dirname(os.path.realpath(__file__))
 PLUGIN_NAME = 'RequireJS Module Manager'
 SETTINGS_FILENAME = PLUGIN_NAME + '.sublime-settings'
-SETTING_NAMES = ('node_command', 'rjs_path', 'requirejs_config', 'quote_style',
-                 'ignore', 'sort_dependencies')
+SETTING_NAMES = (
+    'node_command',
+    'rjs_path',
+    'requirejs_config',
+    'ignore',
+    'sort_dependencies',
+    'sort_order',
+    'dependency_template',
+    )
 
 # globals
 package_settings = None
@@ -65,18 +72,16 @@ def var_sort(key):
 def id_sort(key, sort_order):
     prefix = ' '
     length = len(sort_order)
-    pattern = '^(?P<remote>https?\:\/\/)?(?P<relative>(?:\.)+?(?=/))?(?P<absolute>/)?'
-    match = re.search(pattern, key)
-    if match.group('remote'):
+    match = re.search('^(https?\:\/\/)?((?:\.)+?(?=/))?(/)?', key)
+    if match.group(1):
         sort_by = 'remote'
-    elif match.group('relative'):
+    elif match.group(2):
         sort_by = 'relative'
-    elif match.group('absolute'):
+    elif match.group(3):
         sort_by = 'absolute'
     else:
         sort_by = 'id'
     count = length - sort_order.index(sort_by) - 1
-    print (prefix * count) + key
     return (prefix * count) + key
 
 
@@ -332,7 +337,7 @@ class RequireJSModuleDependencyCommand(WindowCommand):
         contents = view.substr(sublime.Region(0, view.size()))
         selection = view.sel()[0]
 
-        script = os.path.join(PLUGIN_FOLDER, 'js/get_dependencies.js')
+        script = os.path.join(PLUGIN_FOLDER, 'js/extract_dependencies.js')
         cmd = (self.settings.node_command, script, self.settings.rjs_path,
                contents, str(selection.begin()), str(selection.end()))
         proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
@@ -355,17 +360,18 @@ class RequireJSModuleDependencyCommand(WindowCommand):
     def insertDeps(self):
         view = self.window.active_view()
         contents = view.substr(sublime.Region(0, view.size()))
+        selection = view.sel()[0]
 
-        script = os.path.join(PLUGIN_FOLDER, 'js/modify_dependencies.js')
+        script = os.path.join(PLUGIN_FOLDER, 'js/insert_dependencies.js')
         cmd = (self.settings.node_command, script, self.settings.rjs_path,
                contents, json.dumps(self.deps_node), str(self.deps),
-               str(self.var_changes))
-        # print ' '.join(cmd)
+               str(self.var_changes), self.settings.dependency_template)
+        print '\n'.join(cmd)
+        # print self.deps, self.var_changes
         proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
         stdout, stderr = proc.communicate()
         if stderr:
-            message = 'I done fucked up'
-            print '%s: %s' % (PLUGIN_NAME, message)
+            print '%s: %s' % (PLUGIN_NAME, stderr)
             raise Exception()
         print stdout
 
@@ -394,7 +400,6 @@ class AddRequirejsModuleDependencyCommand(RequireJSModuleDependencyCommand):
             # wrap the sort function to be called with the current sort order setting
             def with_setting(f):
                 def wrapper(key):
-                    print "In the wrapper", key, self.settings.sort_order
                     return f(key, self.settings.sort_order)
                 return wrapper
             id_sort_with_setting = with_setting(id_sort)
@@ -408,7 +413,7 @@ class AddRequirejsModuleDependencyCommand(RequireJSModuleDependencyCommand):
                        if self.deps.valueof(k) != v]
         var_changes = filter(lambda x: (x[0] != None and x[1] != None), var_changes)
         self.var_changes = Collection(var_changes)
-        print self.deps
+
         self.insertDeps()
 
     def run(self):
@@ -420,7 +425,7 @@ class AddRequirejsModuleDependencyCommand(RequireJSModuleDependencyCommand):
             return
 
         if type(self.settings.requirejs_config) is unicode:
-            script = os.path.join(PLUGIN_FOLDER, 'js/get_requirejs_config.js')
+            script = os.path.join(PLUGIN_FOLDER, 'js/extract_requirejs_config.js')
             cmd = (self.settings.node_command, script,
                    self.settings.rjs_path, self.settings.requirejs_config)
             proc = Popen(cmd, stdout=PIPE, stderr=PIPE)

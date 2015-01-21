@@ -57,6 +57,7 @@
   ],
 
   // If no dependencies are available to infer formatting from, insert the
-  // added module id or path string in either 'single' or "double" quotes.
-  "quote_style": "single"
+  // dependency module id array and factory function.
+  "dependency_template": "([\n\t'element1',\n\t'element2'\n], function ( argument1, argument2 ) {})"
+  // "dependency_template": "(['element1', 'element2'], function (argument1, argument2) {})"
 }
